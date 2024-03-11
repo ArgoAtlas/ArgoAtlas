@@ -5,13 +5,16 @@ const socket = new WebSocket("ws://localhost:3000");
 const width = window.innerWidth;
 const height = window.innerHeight;
 
-const svg = d3
+const canvas = d3
   .select("#container")
-  .append("svg")
+  .append("canvas")
   .attr("width", width)
-  .attr("height", height);
+  .attr("height", height)
+  .node();
+const context = canvas.getContext("2d");
+
 const projection = d3.geoEquirectangular();
-const geoGenerator = d3.geoPath().projection(projection);
+const geoGenerator = d3.geoPath().projection(projection).context(context);
 
 function updateMap(json) {
   projection.fitExtent(
@@ -22,25 +25,10 @@ function updateMap(json) {
     json,
   );
 
-  svg
-    .append("path")
-    .datum({
-      type: "FeatureCollection",
-      features: json.features,
-    })
-    .attr("d", geoGenerator)
-    .attr("fill", "#f8fafc")
-    .attr("stroke", "#020617");
-
-  const zoom = d3
-    .zoom()
-    .scaleExtent([1, 5])
-    .on("zoom", (event) => {
-      const { transform } = event;
-      svg.selectAll("path").attr("transform", transform);
-      svg.selectAll("circle").attr("transform", transform);
-    });
-  svg.call(zoom);
+  context.beginPath();
+  geoGenerator({ type: "FeatureCollection", features: json.features });
+  context.stroke();
+  context.closePath();
 }
 
 d3.json("countries.json").then((data) => updateMap(data));
@@ -53,13 +41,10 @@ socket.onmessage = function (event) {
       message.MetaData.longitude,
       message.MetaData.latitude,
     ]);
-    svg
-      .append("circle")
-      .attr("cx", coords[0])
-      .attr("cy", coords[1])
-      .attr("r", 1)
-      .style("fill", "red")
-      .append("title")
-      .text(message.MetaData.ShipName);
+
+    context.beginPath();
+    context.fillStyle = "red";
+    context.arc(coords[0], coords[1], 1.2, 0, 2 * Math.PI);
+    context.fill();
   }
 };
