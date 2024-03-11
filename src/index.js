@@ -45,18 +45,6 @@ function updateMap(json) {
 
 d3.json("countries.json").then((data) => updateMap(data));
 
-// socket.onopen = function (event) {
-//   console.log("socket is open", event);
-//   const subscriptionMessage = {
-//     Apikey: config.aisKey,
-//     BoundingBoxes: [
-//       [-180, -90],
-//       [180, 90],
-//     ],
-//   };
-//   socket.send(JSON.stringify(subscriptionMessage));
-// };
-
 socket.onmessage = function (event) {
   const message = JSON.parse(event.data);
 
