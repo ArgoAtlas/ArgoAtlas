@@ -52,6 +52,7 @@ function updateMap(json) {
   context.beginPath();
   geoGenerator({ type: "FeatureCollection", features: json.features });
   context.stroke();
+  drawCanvas();
   context.closePath();
 }
 
