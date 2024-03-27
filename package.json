@@ -7,7 +7,8 @@
     "build": "webpack",
     "watch": "webpack --watch",
     "start": "webpack serve --open",
-    "prepare": "husky"
+    "prepare": "husky",
+    "devStart": "nodemon src/server.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,9 @@
   "homepage": "https://github.com/ArgoAtlas/ArgoAtlas#readme",
   "dependencies": {
     "d3": "^7.8.5",
+    "ejs": "^3.1.9",
+    "express": "^4.19.2",
+    "mongoose": "^8.2.3",
     "ws": "^8.16.0"
   },
   "devDependencies": {
@@ -28,6 +32,7 @@
     "eslint-config-prettier": "^9.1.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
+    "nodemon": "^3.1.0",
     "prettier": "3.2.5",
     "webpack": "^5.90.2",
     "webpack-cli": "^5.1.4",
