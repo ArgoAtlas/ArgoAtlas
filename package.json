@@ -8,7 +8,7 @@
     "watch": "webpack --watch",
     "start": "webpack serve --open",
     "prepare": "husky",
-    "devStart": "nodemon src/server.js"
+    "devStart": "nodemon server.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/ArgoAtlas/ArgoAtlas#readme",
   "dependencies": {
+    "cors": "^2.8.5",
     "d3": "^7.8.5",
     "ejs": "^3.1.9",
     "express": "^4.19.2",

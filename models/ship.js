@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const shipSchema = new mongoose.Schema({
-  mmsi: Number,
+  mmsi: { type: Number, index: true },
   longitude: Number,
   latitude: Number,
 });
