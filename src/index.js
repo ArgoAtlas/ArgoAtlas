@@ -27,8 +27,6 @@ async function drawCanvas() {
     context.fill();
     context.closePath();
   });
-
-  console.log("updated");
 }
 
 function updateMap(json) {

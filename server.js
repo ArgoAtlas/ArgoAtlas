@@ -55,7 +55,6 @@ socket.addEventListener("message", (event) => {
 
 app.get("/ships", async (req, res) => {
   const ships = await Ship.find();
-  console.log(ships);
   res.json(ships);
 });
 
