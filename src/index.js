@@ -1,57 +1,72 @@
-import * as d3 from "d3";
-
 const serverAddress = "http://localhost:5000";
 
-const canvas = d3.select("#container").append("canvas").node();
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-const context = canvas.getContext("2d");
+d3.select("#map").style("position", "relative");
+const canvas = d3.select("#map").append("canvas").node();
+const ctx = canvas.getContext("2d");
 
-const projection = d3.geoEquirectangular();
-const geoGenerator = d3.geoPath().projection(projection).context(context);
+canvas.width = 800;
+canvas.height = 600;
 
-const countries = await d3.json(`${serverAddress}/countries`);
+const svg = d3
+  .select("#map")
+  .append("svg")
+  .attr("width", canvas.width)
+  .attr("height", canvas.height)
+  .style("position", "absolute")
+  .style("top", "0px")
+  .style("left", "0px");
+
+d3.queue()
+  .defer(d3.json, "../dist/world.topojson") // data for countries
+  .await(ready);
+
+var projection = d3
+  .geoMercator()
+  .translate([canvas.width / 2, canvas.height / 2]) // centering
+  .scale(110);
+
+var path = d3.geoPath().projection(projection); // create path with projection -> aus Punkten Pfade machen und ausfüllen
+
+var g = svg.append("g"); // ============================================================================================================================================================================================================== mui importante
+
+function ready(error, data) {
+  console.log(data);
+  var countries = topojson.feature(data, data.objects.countries).features;
+
+  console.log(countries);
+
+  g.selectAll(".country") // Länder
+    .data(countries)
+    .enter()
+    .append("path")
+    .attr("class", "country")
+    .attr("d", path)
+    .append("title")
+    .text((d) => d.properties.name);
+
+  svg.call(
+    d3.zoom().on("zoom", () => {
+      // pan & zoom functionality
+      g.attr("transform", d3.event.transform);
+    }),
+  );
+}
 
 async function drawCanvas() {
   const response = await fetch(`${serverAddress}/ships`);
   const ships = await response.json();
 
-  updateMap(countries);
-
   ships.forEach((ship) => {
     const coords = projection([ship.longitude, ship.latitude]);
 
-    context.beginPath();
-    context.fillStyle = "red";
-    context.arc(coords[0], coords[1], 1.2, 0, 2 * Math.PI);
-    context.fill();
-    context.closePath();
+    ctx.beginPath();
+    ctx.fillStyle = "red";
+    ctx.arc(coords[0], coords[1], 0.5, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.closePath();
   });
 
   console.log("updated");
 }
 
-function updateMap(json) {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  projection.fitExtent(
-    [
-      [0, 0],
-      [width, height],
-    ],
-    json,
-  );
-
-  canvas.width = width;
-  canvas.height = height;
-
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.beginPath();
-  geoGenerator({ type: "FeatureCollection", features: json.features });
-  context.stroke();
-  context.closePath();
-}
-
-updateMap(countries);
-d3.timer(drawCanvas);
+d3.timer(drawCanvas, 1000);
