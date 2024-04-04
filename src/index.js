@@ -52,4 +52,4 @@ function updateMap(json) {
 }
 
 updateMap(countries);
-d3.timer(drawCanvas);
+d3.interval(drawCanvas, 1000);
