@@ -20,7 +20,6 @@ function update() {
       new ScatterplotLayer({
         id: "points",
         data: `${serverAddress}/ships`,
-        stroked: false,
         filled: true,
         getPosition: (d) => [d.longitude, d.latitude],
         getFillColor: [255, 0, 0],
@@ -30,8 +29,10 @@ function update() {
       new GeoJsonLayer({
         id: "map",
         data: `${serverAddress}/countries`,
-        filled: true,
-        getLineColor: [255, 255, 255],
+        stroked: true,
+        filled: false,
+        getLineColor: [0, 0, 0],
+        lineWidthMinPixels: 1,
       }),
     ],
   });
