@@ -1,82 +1,32 @@
-import * as d3 from "d3";
+import { Deck } from "@deck.gl/core";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 
-const serverAddress = "http://localhost:5000";
+const INITIAL_VIEW_STATE = {
+  latitude: 0,
+  longitude: 0,
+  zoom: 2,
+};
 
-const canvas = d3.select("#container").append("canvas").node();
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-const context = canvas.getContext("2d");
+const geoJsonLayer = new GeoJsonLayer({
+  id: "map",
+  data: "http://localhost:5000/countries",
+  filled: true,
+  getLineColor: [255, 255, 255],
+});
 
-const projection = d3.geoEquirectangular();
-const geoGenerator = d3.geoPath().projection(projection).context(context);
+const scatterplotLayer = new ScatterplotLayer({
+  id: "points",
+  data: "http://localhost:5000/ships",
+  stroked: false,
+  filled: true,
+  getPosition: (d) => [d.longitude, d.latitude],
+  getFillColor: [255, 0, 0],
+  radiusMinPixels: 2,
+  radiusMaxPixels: 3,
+});
 
-const countries = await d3.json(`${serverAddress}/countries`);
-
-async function drawCanvas(transform) {
-  const response = await fetch(`${serverAddress}/ships`);
-  const ships = await response.json();
-
-  if (!transform) transform = d3.zoomIdentity;
-
-  updateMap(countries, transform);
-
-  ships.forEach((ship) => {
-    const coords = projection([ship.longitude, ship.latitude]);
-
-    context.beginPath();
-    context.fillStyle = "red";
-    context.arc(
-      coords[0] + transform.x,
-      coords[1] + transform.y,
-      1.2 * transform.k,
-      0,
-      2 * Math.PI,
-    );
-    context.fill();
-    context.closePath();
-  });
-}
-
-function updateMap(json, transform) {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  projection.fitExtent(
-    [
-      [0, 0],
-      [width, height],
-    ],
-    json,
-  );
-
-  canvas.width = width;
-  canvas.height = height;
-
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.save();
-  context.beginPath();
-  if (transform) {
-    context.translate(transform.x, transform.y);
-    context.scale(transform.k, transform.k);
-  }
-  geoGenerator({ type: "FeatureCollection", features: json.features });
-  context.stroke();
-  context.closePath();
-  context.restore();
-}
-
-function zoomed(event) {
-  drawCanvas(event.transform);
-}
-
-d3.select(canvas).call(
-  d3
-    .zoom()
-    .scaleExtent([1, 8])
-    .on("zoom", (event) => {
-      zoomed(event);
-    }),
-);
-
-zoomed(d3.zoomIdentity);
-d3.interval(drawCanvas, 1000);
+const deckInstance = new Deck({
+  initialViewState: INITIAL_VIEW_STATE,
+  controller: true,
+  layers: [scatterplotLayer, geoJsonLayer],
+});
