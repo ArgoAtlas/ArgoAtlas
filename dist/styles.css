@@ -1,25 +1,12 @@
 body {
   margin: 0px;
   overflow: hidden;
-  background-color: rgb(130, 183, 226);
-  /*background-color: rgba(133, 118, 20, 0.518);*/
+  /*background-color: rgb(130, 183, 226);*/
+  background-color: rgba(133, 118, 20, 0.518);
 }
 
-.country {
-  fill: #878189;
-  /*fill: #b9751d65;*/
-  stroke: #000000;
-  stroke-width: 0.15;
-}
-
-.country:hover {
-  fill: #a4a4a4;
-}
-
-circle {
-  fill: red;
-}
-
-circle:hover {
-  fill: #a4a4a4;
+#tooltip {
+  position: absolute;
+  font-size: 5px;
+  font-family: Arial, Helvetica, sans-serif;
 }
