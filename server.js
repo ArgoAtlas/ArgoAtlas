@@ -14,20 +14,41 @@ const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 
 mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
 
-async function update(mmsi, message) {
+async function updatePosition(mmsi, message) {
   const ships = await Ship.find({ mmsi: mmsi });
 
   if (ships.length > 0) {
     ships.forEach((ship) => {
-      ship.longitude = message.Longitude;
-      ship.latitude = message.Latitude;
+      ship.position.longitude = message.Longitude;
+      ship.position.latitude = message.Latitude;
       ship.save();
     });
   } else {
     await Ship.create({
       mmsi: mmsi,
-      longitude: message.Longitude,
-      latitude: message.Latitude,
+      position: {
+        longitude: message.Longitude,
+        latitude: message.Latitude,
+      },
+    });
+  }
+}
+
+async function updateShipData(mmsi, message) {
+  const ships = await Ship.find({ mmsi: mmsi });
+
+  if (ships.length > 0) {
+    ships.forEach((ship) => {
+      ship.name = message.Name;
+      ship.callSign = message.CallSign;
+      ship.destination = message.Destination;
+      ship.save();
+    });
+  } else {
+    await Ship.create({
+      name: message.Name,
+      callSign: message.callSign,
+      destination: message.Destination,
     });
   }
 }
@@ -48,8 +69,13 @@ socket.addEventListener("open", () => {
 socket.addEventListener("message", (event) => {
   const message = JSON.parse(event.data);
 
-  if (message.MessageType === "PositionReport") {
-    update(message.MetaData.MMSI, message.Message.PositionReport);
+  switch (message.MessageType) {
+    case "PositionReport":
+      updatePosition(message.MetaData.MMSI, message.Message.PositionReport);
+      break;
+    case "ShipStaticData":
+      updateShipData(message.MetaData.MMSI, message.Message.ShipStaticData);
+      break;
   }
 });
 
