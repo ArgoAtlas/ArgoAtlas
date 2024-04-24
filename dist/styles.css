@@ -1,8 +1,6 @@
 body {
   margin: 0px;
   overflow: hidden;
-  /*background-color: rgb(130, 183, 226);*/
-  background-color: rgba(133, 118, 20, 0.518);
 }
 
 #tooltip {
