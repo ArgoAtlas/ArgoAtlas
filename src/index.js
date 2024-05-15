@@ -1,21 +1,28 @@
-import { Deck } from "@deck.gl/core";
-import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { MapboxOverlay } from "@deck.gl/mapbox";
+import { ScatterplotLayer } from "@deck.gl/layers";
+import { Map } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 const serverAddress = "http://localhost:5000";
 
-const INITIAL_VIEW_STATE = {
-  latitude: 0,
-  longitude: 0,
+const map = new Map({
+  container: "map",
+  style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  center: [0.45, 51.47],
   zoom: 2,
-};
+  maxZoom: 12,
+  minZoom: 1,
+});
 
-const deckInstance = new Deck({
-  initialViewState: INITIAL_VIEW_STATE,
-  controller: true,
+await map.once("load");
+
+const deckOverlay = new MapboxOverlay({
+  interleaved: true,
+  layers: [],
 });
 
 function update() {
-  deckInstance.setProps({
+  deckOverlay.setProps({
     layers: [
       new ScatterplotLayer({
         id: "points",
@@ -26,17 +33,12 @@ function update() {
         radiusMinPixels: 2,
         radiusMaxPixels: 3,
       }),
-      new GeoJsonLayer({
-        id: "map",
-        data: `${serverAddress}/countries`,
-        stroked: true,
-        filled: false,
-        getLineColor: [0, 0, 0],
-        lineWidthMinPixels: 1,
-      }),
     ],
   });
 
-  setTimeout(update, 1000);
+  setTimeout(update, 5000);
 }
+
+map.addControl(deckOverlay);
+
 update();
