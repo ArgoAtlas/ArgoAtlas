@@ -36,7 +36,7 @@ function update() {
     ],
   });
 
-  setTimeout(update, 5000);
+  setTimeout(update, 1000);
 }
 
 map.addControl(deckOverlay);
