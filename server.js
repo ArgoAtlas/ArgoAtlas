@@ -7,8 +7,6 @@ const mongoose = require("mongoose");
 const config = require("./config.json");
 const Ship = require("./models/ship");
 
-const countries = require("./countries.json");
-
 const WebSocket = require("ws");
 const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 
@@ -82,10 +80,6 @@ socket.addEventListener("message", (event) => {
 app.get("/ships", async (req, res) => {
   const ships = await Ship.find();
   res.json(ships);
-});
-
-app.get("/countries", (req, res) => {
-  res.json(countries);
 });
 
 app.listen(5000);
