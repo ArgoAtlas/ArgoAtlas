@@ -47,7 +47,7 @@ async function updateShipData(mmsi, message) {
     });
   } else {
     await Ship.create({
-      mmsi: -1,
+      mmsi: mmsi,
       name: message.Name,
       callSign: message.callSign,
       destination: message.Destination,
