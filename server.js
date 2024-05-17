@@ -53,7 +53,7 @@ async function updateShipData(mmsi, message) {
       destination: message.Destination,
       position: {
         longitude: -1,
-        latitide: -1,
+        latitude: -1,
       },
     });
   }
