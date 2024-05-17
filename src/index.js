@@ -28,7 +28,7 @@ function update() {
         id: "points",
         data: `${serverAddress}/ships`,
         filled: true,
-        getPosition: (d) => [d.longitude, d.latitude],
+        getPosition: (d) => [d.position.longitude, d.position.latitude],
         getFillColor: [255, 0, 0],
         radiusMinPixels: 2,
         radiusMaxPixels: 3,

@@ -24,6 +24,9 @@ async function updatePosition(mmsi, message) {
   } else {
     await Ship.create({
       mmsi: mmsi,
+      name: "",
+      callSign: "",
+      destination: "",
       position: {
         longitude: message.Longitude,
         latitude: message.Latitude,
@@ -44,9 +47,14 @@ async function updateShipData(mmsi, message) {
     });
   } else {
     await Ship.create({
+      mmsi: -1,
       name: message.Name,
       callSign: message.callSign,
       destination: message.Destination,
+      position: {
+        longitude: -1,
+        latitide: -1,
+      },
     });
   }
 }
