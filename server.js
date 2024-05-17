@@ -51,7 +51,7 @@ async function updateShipData(mmsi, message) {
     await Ship.create({
       mmsi: mmsi,
       name: message.Name,
-      callSign: message.callSign,
+      callSign: message.CallSign,
       destination: message.Destination,
       position: {
         longitude: -180,
