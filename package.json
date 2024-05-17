@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/ArgoAtlas/ArgoAtlas#readme",
   "dependencies": {
+    "@deck.gl/core": "^9.0.5",
+    "@deck.gl/geo-layers": "^9.0.14",
     "@deck.gl/layers": "^9.0.5",
     "@deck.gl/mapbox": "^9.0.14",
     "cors": "^2.8.5",

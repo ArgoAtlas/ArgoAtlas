@@ -96,4 +96,4 @@ app.get("/ports", (req, res) => {
   res.json(ports);
 });
 
-app.listen(5000);
+app.listen(3000);

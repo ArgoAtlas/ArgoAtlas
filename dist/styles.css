@@ -6,6 +6,12 @@ body,
   height: 100%;
 }
 
+html,
+body,
+#map {
+  height: 100%;
+}
+
 #tooltip {
   position: absolute;
   z-index: 1;

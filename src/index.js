@@ -2,17 +2,25 @@ import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { MVTLayer } from "@deck.gl/geo-layers";
 
-const serverAddress = "http://localhost:5000";
+const serverAddress = "http://localhost:3000";
 
 const map = new Map({
   container: "map",
   style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-  center: [0.45, 51.47],
-  zoom: 2,
-  maxZoom: 12,
-  minZoom: 1,
+  center: [0.45, 51.47], // It is the center of the map
+  zoom: 2, // It is the zoom level
+  minZoom: 1, // It is the minimum zoom level
+  maxZoom: 20, // It is the maximum zoom level
+  pitch: 0, // It is the angle of the camera from the ground
+  bearing: 0, // It is the angle of the camera from the north
+  hash: true, // It allows the map to remember the current view
+  interactive: true, // It allows the map to be interactive
+  attributionControl: true, // It allows the map to show the attribution control
 });
+
+map.scrollZoom.setZoomRate(1 / 500); // It sets the zoom rate of the map
 
 await map.once("load");
 
@@ -96,6 +104,17 @@ function updateMap() {
         pointRadiusMinPixels: 2,
         pickable: true,
         onHover: updatePortTooltip,
+      }),
+      new GeoJsonLayer({
+        id: "current-layer",
+        data: "https://gist.githubusercontent.com/jalbertbowden/5d04b722ced715e32cee3e8c8c4df95b/raw/7c153b799947d05f66694fc23ab7c2176371c559/map.geojson",
+        pickable: true,
+        stroked: true,
+        filled: false,
+        lineWidthScale: 20,
+        lineWidthMinPixels: 2,
+        getLineColor: [255, 255, 255, 255], // Setze die Farbe der Linien auf Weiß
+        getLineWidth: 1,
       }),
       new ScatterplotLayer({
         id: "points",
