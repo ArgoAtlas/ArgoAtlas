@@ -21,6 +21,66 @@ const deckOverlay = new MapboxOverlay({
   layers: [],
 });
 
+const tooltip = document.createElement("div");
+tooltip.id = "tooltip";
+
+const tooltipTitle = document.createElement("h3");
+const tooltipEntries = document.createElement("div");
+tooltipEntries.id = "tooltipEntries";
+
+tooltip.appendChild(tooltipTitle);
+tooltip.appendChild(tooltipEntries);
+
+document.body.append(tooltip);
+
+function createTooltipEntry(title, message) {
+  const entry = document.createElement("div");
+
+  const titleElement = document.createElement("h4");
+  const messageElement = document.createElement("span");
+
+  titleElement.innerText = title;
+  messageElement.innerText = message;
+
+  entry.appendChild(titleElement);
+  entry.appendChild(messageElement);
+
+  return entry;
+}
+
+function updatePortTooltip({ object, x, y }) {
+  if (object) {
+    tooltip.style.display = "block";
+    tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
+    tooltip.style.top = `${y + 10}px`;
+    tooltipTitle.innerText = object.properties.name.trim();
+    tooltipEntries.textContent = "";
+    tooltipEntries.appendChild(createTooltipEntry("Type:", "Port"));
+  } else {
+    tooltip.style.display = "none";
+  }
+}
+
+function updateShipTooltip({ object, x, y }) {
+  if (object) {
+    tooltip.style.display = "block";
+    tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
+    tooltip.style.top = `${y + 10}px`;
+    tooltipTitle.innerText = object.name.trim();
+    tooltipEntries.textContent = "";
+    tooltipEntries.appendChild(createTooltipEntry("Type:", "Ship"));
+    tooltipEntries.appendChild(createTooltipEntry("MMSI:", object.mmsi));
+    tooltipEntries.appendChild(
+      createTooltipEntry("Call sign:", object.callSign.trim()),
+    );
+    tooltipEntries.appendChild(
+      createTooltipEntry("Destination:", object.destination.trim()),
+    );
+  } else {
+    tooltip.style.display = "none";
+  }
+}
+
 function updateMap() {
   deckOverlay.setProps({
     layers: [
@@ -34,6 +94,8 @@ function updateMap() {
         getFillColor: [0, 0, 255],
         pointRadiusMaxPixels: 5,
         pointRadiusMinPixels: 2,
+        pickable: true,
+        onHover: updatePortTooltip,
       }),
       new ScatterplotLayer({
         id: "points",
@@ -43,6 +105,8 @@ function updateMap() {
         getFillColor: [255, 0, 0],
         radiusMinPixels: 2,
         radiusMaxPixels: 3,
+        pickable: true,
+        onHover: updateShipTooltip,
       }),
     ],
   });
