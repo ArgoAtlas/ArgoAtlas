@@ -1,5 +1,5 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { ScatterplotLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -21,9 +21,20 @@ const deckOverlay = new MapboxOverlay({
   layers: [],
 });
 
-function update() {
+function updateMap() {
   deckOverlay.setProps({
     layers: [
+      new GeoJsonLayer({
+        id: "ports",
+        data: `${serverAddress}/ports`,
+        pointType: "circle+text",
+        filled: true,
+        stroked: true,
+        getLineColor: [0, 0, 255],
+        getFillColor: [0, 0, 255],
+        pointRadiusMaxPixels: 5,
+        pointRadiusMinPixels: 2,
+      }),
       new ScatterplotLayer({
         id: "points",
         data: `${serverAddress}/ships`,
@@ -36,9 +47,9 @@ function update() {
     ],
   });
 
-  setTimeout(update, 1000);
+  setTimeout(updateMap, 1000);
 }
 
 map.addControl(deckOverlay);
 
-update();
+updateMap();
