@@ -105,12 +105,18 @@ function updateShipTooltip({ object, x, y }) {
   }
 }
 
-function updateMap() {
+async function updateMap() {
+  const portsResponse = await fetch(`${serverAddress}/ports`);
+  const shipsResponse = await fetch(`${serverAddress}/ships`);
+
+  const ports = await portsResponse.json();
+  const ships = await shipsResponse.json();
+
   deckOverlay.setProps({
     layers: [
       new GeoJsonLayer({
         id: "ports",
-        data: `${serverAddress}/ports`,
+        data: ports,
         pointType: "circle+text",
         filled: true,
         stroked: true,
@@ -123,7 +129,7 @@ function updateMap() {
       }),
       new ScatterplotLayer({
         id: "points",
-        data: `${serverAddress}/ships`,
+        data: ships,
         filled: true,
         getPosition: (d) => [d.position.longitude, d.position.latitude],
         getFillColor: [255, 0, 0],
@@ -135,7 +141,7 @@ function updateMap() {
     ],
   });
 
-  setTimeout(updateMap, 1000);
+  setTimeout(updateMap, 5000);
 }
 
 map.addControl(deckOverlay);
