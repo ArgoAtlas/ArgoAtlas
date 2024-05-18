@@ -56,6 +56,18 @@ function updatePortTooltip({ object, x, y }) {
     tooltipTitle.innerText = object.properties.name.trim();
     tooltipEntries.textContent = "";
     tooltipEntries.appendChild(createTooltipEntry("Type:", "Port"));
+    tooltipEntries.appendChild(
+      createTooltipEntry(
+        "Latitude:",
+        Math.round(object.geometry.coordinates[1] * 10000) / 10000,
+      ),
+    );
+    tooltipEntries.appendChild(
+      createTooltipEntry(
+        "Longitude:",
+        Math.round(object.geometry.coordinates[0] * 10000) / 10000,
+      ),
+    );
   } else {
     tooltip.style.display = "none";
   }
@@ -70,6 +82,18 @@ function updateShipTooltip({ object, x, y }) {
     tooltipEntries.textContent = "";
     tooltipEntries.appendChild(createTooltipEntry("Type:", "Ship"));
     tooltipEntries.appendChild(createTooltipEntry("MMSI:", object.mmsi));
+    tooltipEntries.appendChild(
+      createTooltipEntry(
+        "Latitude:",
+        Math.round(object.position.latitude * 10000) / 10000,
+      ),
+    );
+    tooltipEntries.appendChild(
+      createTooltipEntry(
+        "Longitude:",
+        Math.round(object.position.longitude * 10000) / 10000,
+      ),
+    );
     tooltipEntries.appendChild(
       createTooltipEntry("Call sign:", object.callSign.trim()),
     );
