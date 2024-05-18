@@ -4,15 +4,31 @@ import { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const serverAddress = "http://localhost:5000";
+const darkStyle =
+  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+const lightStyle =
+  "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 const map = new Map({
   container: "map",
-  style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  style: window.matchMedia("(prefers-color-scheme: dark)")
+    ? darkStyle
+    : lightStyle,
   center: [0.45, 51.47],
   zoom: 2,
   maxZoom: 12,
   minZoom: 1,
 });
+
+window
+  .matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", (event) => {
+    if (event.matches) {
+      map.setStyle(darkStyle);
+    } else {
+      map.setStyle(lightStyle);
+    }
+  });
 
 await map.once("load");
 
