@@ -6,6 +6,7 @@ app.use(cors());
 const mongoose = require("mongoose");
 const config = require("./config.json");
 const Ship = require("./models/ship");
+const Path = require("./models/path");
 
 const ports = require("./ports.json");
 
