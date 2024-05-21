@@ -13,7 +13,30 @@ const ports = require("./ports.json");
 const WebSocket = require("ws");
 const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 
+const decisionInterval = 1;
+const referenceValue = decisionInterval / 2;
+
 mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
+
+// compute cumulative sum, used to detect deviations
+function calculateCusum(prevPositive, prevNegative, target, sample) {
+  const positiveSum = Math.max(
+    0,
+    prevPositive + sample - target - referenceValue,
+  );
+  const negativeSum = Math.max(
+    0,
+    prevNegative - sample + target - referenceValue,
+  );
+
+  return [positiveSum, negativeSum];
+}
+
+function cusum(prevPositive, prevNegative, target, sample) {
+  const result = calculateCusum(prevPositive, prevNegative, target, sample);
+
+  return result[0] > decisionInterval || result[1] > decisionInterval;
+}
 
 async function updatePosition(mmsi, message) {
   const ships = await Ship.find({ mmsi: mmsi });
