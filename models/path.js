@@ -5,23 +5,33 @@ const pathSchema = new mongoose.Schema({
   points: [[Number]],
   latitude: {
     deltas: [Number],
-    previous: Number,
+    previous: [Number],
+    controlPositive: Number,
+    controlNegative: Number,
   },
   longitude: {
     deltas: [Number],
-    previous: Number,
+    previous: [Number],
+    controlPositive: Number,
+    controlNegative: Number,
   },
   cog: {
     deltas: [Number],
-    previous: Number,
+    previous: [Number],
+    controlPositive: Number,
+    controlNegative: Number,
   },
   sog: {
     deltas: [Number],
-    previous: Number,
+    previous: [Number],
+    controlPositive: Number,
+    controlNegative: Number,
   },
   turnRate: {
     deltas: [Number],
-    previous: Number,
+    previous: [Number],
+    controlPositive: Number,
+    controlNegative: Number,
   },
 });
 
