@@ -1,5 +1,5 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, ScatterplotLayer, PathLayer } from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -124,9 +124,11 @@ function updateShipTooltip({ object, x, y }) {
 async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
+  const pathsResponse = await fetch(`${serverAddress}/paths`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
+  const paths = await pathsResponse.json();
 
   deckOverlay.setProps({
     layers: [
@@ -153,6 +155,13 @@ async function updateMap() {
         radiusMaxPixels: 3,
         pickable: true,
         onHover: updateShipTooltip,
+      }),
+      new PathLayer({
+        id: "paths",
+        data: paths,
+        getColor: [0, 255, 0],
+        getPath: (d) => d.points,
+        getWidth: 100,
       }),
     ],
   });
