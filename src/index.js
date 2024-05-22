@@ -11,7 +11,7 @@ const lightStyle =
 
 const map = new Map({
   container: "map",
-  style: window.matchMedia("(prefers-color-scheme: dark)")
+  style: window.matchMedia("(prefers-color-scheme: dark)").matches
     ? darkStyle
     : lightStyle,
   center: [0.45, 51.47],
