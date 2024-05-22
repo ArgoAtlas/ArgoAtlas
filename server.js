@@ -143,7 +143,7 @@ async function updatePath(mmsi, message) {
     checkCusumThreshold(latitudeCusum) ||
     checkCusumThreshold(longitudeCusum)
   ) {
-    data.points.push([message.Latitude, message.Longitude]);
+    data.points.push([message.Longitude, message.Latitude]);
     data.latitude.controlPositive = 0;
     data.latitude.controlNegative = 0;
     data.longitude.controlPositive = 0;
