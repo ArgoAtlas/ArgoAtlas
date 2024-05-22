@@ -156,10 +156,6 @@ async function updatePath(mmsi, message) {
   }
 
   await Path.updateOne(filter, data, { upsert: true });
-
-  console.log("CUSUM:", latitudeCusum, longitudeCusum);
-  console.log("Position:", message.Latitude, message.Longitude);
-  console.log("Path:", path);
 }
 
 async function updateShipData(mmsi, message) {
@@ -179,8 +175,8 @@ async function updateShipData(mmsi, message) {
       callSign: message.CallSign,
       destination: message.Destination,
       position: {
-        longitude: -180,
-        latitude: -90,
+        longitude: 0,
+        latitude: 0,
       },
     });
   }
