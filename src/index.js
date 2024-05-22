@@ -162,6 +162,7 @@ async function updateMap() {
         getColor: [0, 255, 0],
         getPath: (d) => d.points,
         getWidth: 100,
+        widthMinPixels: 3,
       }),
     ],
   });
