@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const shipSchema = new mongoose.Schema({
   mmsi: { type: Number, index: true },
@@ -11,4 +11,4 @@ const shipSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Ship", shipSchema);
+export default mongoose.model("Ship", shipSchema);

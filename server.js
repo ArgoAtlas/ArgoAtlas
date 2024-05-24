@@ -1,16 +1,15 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+import config from "./config.json" with { type: "json" };
+import Ship from "./models/ship.js";
+import Path from "./models/path.js";
+import ports from "./ports.json" with { type: "json" };
+import WebSocket from "ws";
+
 const app = express();
 app.use(cors());
 
-const mongoose = require("mongoose");
-const config = require("./config.json");
-const Ship = require("./models/ship");
-const Path = require("./models/path");
-
-const ports = require("./ports.json");
-
-const WebSocket = require("ws");
 const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 
 const decisionInterval = 1;

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
     "build": "webpack",
     "watch": "webpack --watch",

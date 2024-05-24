@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const pathSchema = new mongoose.Schema({
   mmsi: { type: Number, index: true },
@@ -35,4 +35,4 @@ const pathSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Path", pathSchema);
+export default mongoose.model("Path", pathSchema);
