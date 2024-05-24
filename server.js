@@ -188,6 +188,9 @@ async function updatePath(mmsi, message) {
 
   data.latitude.previous.push(message.Latitude);
   data.longitude.previous.push(message.Longitude);
+  data.cog.previous.push(message.Cog);
+  data.sog.previous.push(message.Sog);
+  data.turnRate.previous.push(message.RateOfTurn);
 
   if (
     checkCusumThreshold(latitudeCusum) ||
