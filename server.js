@@ -245,8 +245,10 @@ socket.addEventListener("message", (event) => {
 
   switch (message.MessageType) {
     case "PositionReport":
-      updatePosition(message.MetaData.MMSI, message.Message.PositionReport);
-      updatePath(message.MetaData.MMSI, message.Message.PositionReport);
+      if (message.Message.PositionReport.PositionAccuracy) {
+        updatePosition(message.MetaData.MMSI, message.Message.PositionReport);
+        updatePath(message.MetaData.MMSI, message.Message.PositionReport);
+      }
       break;
     case "ShipStaticData":
       updateShipData(message.MetaData.MMSI, message.Message.ShipStaticData);
