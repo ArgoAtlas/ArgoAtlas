@@ -1,10 +1,14 @@
 export default class Graph {
   constructor() {
     this.adjacencyList = {};
+    this.valueList = {};
   }
 
-  addVertex(vertex) {
-    if (!this.adjacencyList[vertex]) this.adjacencyList[vertex] = [];
+  addVertex(vertex, value) {
+    if (!this.adjacencyList[vertex]) {
+      this.adjacencyList[vertex] = [];
+      this.valueList[vertex] = value;
+    }
   }
 
   addEdge(source, destination) {
@@ -32,5 +36,6 @@ export default class Graph {
     }
 
     delete this.adjacencyList[vertex];
+    delete this.valueList[vertex];
   }
 }
