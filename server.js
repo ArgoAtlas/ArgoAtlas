@@ -127,6 +127,24 @@ async function updatePath(mmsi, message) {
     calculateAverage(data.longitude.previous),
     message.Longitude,
   );
+  const cogCusum = calculateCusum(
+    data.cog.controlPositive,
+    data.cog.controlNegative,
+    calculateAverage(data.cog.previous),
+    message.Cog,
+  );
+  const sogCusum = calculateCusum(
+    data.sog.controlPositive,
+    data.sog.controlNegative,
+    calculateAverage(data.sog.previous),
+    message.Sog,
+  );
+  const turnRateCusum = calculateCusum(
+    data.turnRate.controlPositive,
+    data.turnRate.controlNegative,
+    calculateAverage(data.turnRate.previous),
+    message.RateOfTurn,
+  );
 
   if (data.latitude.previous.length >= maximumEntries) {
     data.latitude.previous.shift();
@@ -136,23 +154,50 @@ async function updatePath(mmsi, message) {
     data.longitude.previous.shift();
   }
 
+  if (data.cog.previous.length >= maximumEntries) {
+    data.cog.previous.shift();
+  }
+
+  if (data.sog.previous.length >= maximumEntries) {
+    data.sog.previous.shift();
+  }
+
+  if (data.turnRate.previous.length >= maximumEntries) {
+    data.turnRate.previous.shift();
+  }
+
   data.latitude.previous.push(message.Latitude);
   data.longitude.previous.push(message.Longitude);
 
   if (
     checkCusumThreshold(latitudeCusum) ||
-    checkCusumThreshold(longitudeCusum)
+    checkCusumThreshold(longitudeCusum) ||
+    checkCusumThreshold(cogCusum) ||
+    checkCusumThreshold(sogCusum) ||
+    checkCusumThreshold(turnRateCusum)
   ) {
     data.points.push([message.Longitude, message.Latitude]);
     data.latitude.controlPositive = 0;
     data.latitude.controlNegative = 0;
     data.longitude.controlPositive = 0;
     data.longitude.controlNegative = 0;
+    data.cog.controlPositive = 0;
+    data.cog.controlNegative = 0;
+    data.sog.controlPositive = 0;
+    data.sog.controlNegative = 0;
+    data.turnRate.controlPositive = 0;
+    data.turnRate.controlNegative = 0;
   } else {
     data.latitude.controlPositive = latitudeCusum[0];
     data.latitude.controlNegative = latitudeCusum[1];
     data.longitude.controlPositive = longitudeCusum[0];
     data.longitude.controlNegative = longitudeCusum[1];
+    data.cog.controlPositive = cogCusum[0];
+    data.cog.controlNegative = cogCusum[1];
+    data.sog.controlPositive = sogCusum[0];
+    data.sog.controlNegative = sogCusum[1];
+    data.turnRate.controlPositive = turnRateCusum[0];
+    data.turnRate.controlNegative = turnRateCusum[1];
   }
 
   await Path.updateOne(filter, data, { upsert: true });
