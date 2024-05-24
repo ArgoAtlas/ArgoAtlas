@@ -115,6 +115,26 @@ async function updatePath(mmsi, message) {
     };
   }
 
+  // reset path if position data differs strongly
+  if (
+    Math.abs(
+      data.latitude.previous[data.latitude.previous.length - 1] -
+        message.Latitude,
+    ) > 0.5 ||
+    Math.abs(
+      data.longitude.previous[data.latitude.previous.length - 1] -
+        message.Longitude,
+    ) > 0.5
+  ) {
+    data.points = [];
+    data.latitude.previous = [];
+    data.latitude.controlPositive = 0;
+    data.latitude.controlNegative = 0;
+    data.longitude.previous = [];
+    data.longitude.controlPositive = 0;
+    data.longitude.controlNegative = 0;
+  }
+
   const latitudeCusum = calculateCusum(
     data.latitude.controlPositive,
     data.latitude.controlNegative,
