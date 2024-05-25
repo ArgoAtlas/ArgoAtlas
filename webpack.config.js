@@ -1,13 +1,14 @@
-const path = require("path");
+import * as path from "path";
+import { fileURLToPath } from "url";
 
-module.exports = {
+export default {
   mode: "development",
   entry: "./src/index.js",
   devServer: {
     static: "./dist",
   },
   output: {
-    path: path.resolve(__dirname, "dist"),
+    path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "dist"),
     filename: "main.js",
   },
   module: {
