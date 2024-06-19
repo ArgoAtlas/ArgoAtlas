@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import config from "./config.json" with { type: "json" };
 import Ship from "./models/ship.js";
 import Path from "./models/path.js";
+import Graph from "./models/graph.js";
+import GraphHelper from "./src/graphHelper.js";
 import ports from "./ports.json" with { type: "json" };
 import WebSocket from "ws";
 
@@ -199,6 +201,43 @@ async function updatePath(mmsi, message) {
     checkCusumThreshold(turnRateCusum)
   ) {
     data.points.push([message.Longitude, message.Latitude]);
+
+    const closePoints = await Graph.find({
+      position: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [message.Longitude, message.Latitude],
+          },
+          $maxDistance: 100,
+        },
+      },
+    });
+
+    if (closePoints.length < 1) {
+      const newVertex = new Graph({
+        position: [message.Longitude, message.Latitude],
+      });
+      newVertex.save();
+
+      const connectionPoints = await Graph.find({
+        position: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [message.Longitude, message.Latitude],
+            },
+            $maxDistance: 200,
+          },
+        },
+      });
+
+      connectionPoints.forEach((point) => {
+        if (newVertex.id !== point.id)
+          GraphHelper.addEdge(newVertex.id, point.id);
+      });
+    }
+
     data.latitude.controlPositive = 0;
     data.latitude.controlNegative = 0;
     data.longitude.controlPositive = 0;
