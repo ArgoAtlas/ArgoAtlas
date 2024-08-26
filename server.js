@@ -7,27 +7,56 @@ const mongoose = require("mongoose");
 const config = require("./config.json");
 const Ship = require("./models/ship");
 
-const countries = require("./countries.json");
+const ports = require("./ports.json");
 
 const WebSocket = require("ws");
 const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 
 mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
 
-async function update(mmsi, message) {
+async function updatePosition(mmsi, message) {
   const ships = await Ship.find({ mmsi: mmsi });
 
   if (ships.length > 0) {
     ships.forEach((ship) => {
-      ship.longitude = message.Longitude;
-      ship.latitude = message.Latitude;
+      ship.position.longitude = message.Longitude;
+      ship.position.latitude = message.Latitude;
       ship.save();
     });
   } else {
     await Ship.create({
       mmsi: mmsi,
-      longitude: message.Longitude,
-      latitude: message.Latitude,
+      name: "UNKNOWN",
+      callSign: "UNKNOWN",
+      destination: "UNKNOWN",
+      position: {
+        longitude: message.Longitude,
+        latitude: message.Latitude,
+      },
+    });
+  }
+}
+
+async function updateShipData(mmsi, message) {
+  const ships = await Ship.find({ mmsi: mmsi });
+
+  if (ships.length > 0) {
+    ships.forEach((ship) => {
+      ship.name = message.Name;
+      ship.callSign = message.CallSign;
+      ship.destination = message.Destination;
+      ship.save();
+    });
+  } else {
+    await Ship.create({
+      mmsi: mmsi,
+      name: message.Name,
+      callSign: message.CallSign,
+      destination: message.Destination,
+      position: {
+        longitude: -180,
+        latitude: -90,
+      },
     });
   }
 }
@@ -48,19 +77,23 @@ socket.addEventListener("open", () => {
 socket.addEventListener("message", (event) => {
   const message = JSON.parse(event.data);
 
-  if (message.MessageType === "PositionReport") {
-    update(message.MetaData.MMSI, message.Message.PositionReport);
+  switch (message.MessageType) {
+    case "PositionReport":
+      updatePosition(message.MetaData.MMSI, message.Message.PositionReport);
+      break;
+    case "ShipStaticData":
+      updateShipData(message.MetaData.MMSI, message.Message.ShipStaticData);
+      break;
   }
 });
 
 app.get("/ships", async (req, res) => {
   const ships = await Ship.find();
-  console.log(ships);
   res.json(ships);
 });
 
-app.get("/countries", (req, res) => {
-  res.json(countries);
+app.get("/ports", (req, res) => {
+  res.json(ports);
 });
 
 app.listen(5000);
