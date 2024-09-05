@@ -125,10 +125,12 @@ async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
   const pathsResponse = await fetch(`${serverAddress}/paths`);
+  const graphResponse = await fetch(`${serverAddress}/graph`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
   const paths = await pathsResponse.json();
+  const graph = await graphResponse.json();
 
   deckOverlay.setProps({
     layers: [
@@ -155,6 +157,15 @@ async function updateMap() {
         radiusMaxPixels: 3,
         pickable: true,
         onHover: updateShipTooltip,
+      }),
+      new ScatterplotLayer({
+        id: "graph",
+        data: graph,
+        filled: true,
+        getPosition: (d) => [d.position[0], d.position[1]],
+        getFillColor: [255, 255, 255],
+        radiusMinPixels: 2,
+        radiusMaxPixels: 3,
       }),
       new PathLayer({
         id: "paths",

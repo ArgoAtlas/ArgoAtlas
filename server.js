@@ -327,6 +327,11 @@ app.get("/paths", async (req, res) => {
   res.json(paths);
 });
 
+app.get("/graph", async (req, res) => {
+  const graph = await Graph.find();
+  res.json(graph);
+});
+
 app.get("/ports", (req, res) => {
   res.json(ports);
 });
