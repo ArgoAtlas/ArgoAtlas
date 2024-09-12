@@ -9,5 +9,47 @@
     <div id="tooltip"></div>
     <div id="map"></div>
     <script src="main.js" defer></script>
+
+    <div class="checkbox-dropdown">
+      Filter entities
+      <ul class="checkbox-dropdown-list">
+        <li>
+          <label>
+            <input
+              type="checkbox"
+              value="Ports"
+              id="portsCheck"
+              checked
+            />Ports</label
+          >
+        </li>
+        <li>
+          <label>
+            <input
+              type="checkbox"
+              value="Ships"
+              id="shipsCheck"
+              checked
+            />Ships</label
+          >
+        </li>
+        <li>
+          <label>
+            <input type="checkbox" id="chokepointsCheck" checked />Major
+            Chokepoints</label
+          >
+        </li>
+      </ul>
+    </div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script>
+      $(".checkbox-dropdown").click(function () {
+        $(this).toggleClass("is-active");
+      });
+
+      $(".checkbox-dropdown ul").click(function (e) {
+        e.stopPropagation();
+      });
+    </script>
   </body>
 </html>

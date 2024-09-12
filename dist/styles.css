@@ -1,18 +1,21 @@
 html,
 body,
 #map {
+  position: absolute;
   margin: 0;
   padding: 0;
   height: 100%;
+  width: 100%;
 }
 
 #tooltip {
   position: absolute;
   z-index: 1;
   pointer-events: none;
-  background: rgba(238, 238, 238, 0.974);
+  background: rgba(63, 63, 63, 0.78);
   border-radius: 10px;
   padding: 8px;
+  color: rgba(255, 255, 255, 0.782);
   font-size: 0.75em;
   font-family:
     system-ui,
@@ -27,26 +30,87 @@ body,
     "Helvetica Neue",
     sans-serif;
 }
-
 #tooltip h3 {
   font-size: 1em;
   margin: 0;
   padding: 0;
   text-align: center;
 }
-
 #tooltipEntries {
   display: flex;
   flex-direction: column;
 }
-
 #tooltipEntries h4 {
   margin: 0;
   padding: 0;
 }
-
 #tooltipEntries div {
   display: flex;
   gap: 8px;
   justify-content: space-between;
+}
+
+.checkbox-dropdown {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 150px;
+  background-color: rgba(63, 63, 63, 0.78);
+  color: rgba(255, 255, 255, 0.782);
+  border-radius: 7px;
+  padding: 5px;
+}
+
+/* Display CSS arrow to the right of the dropdown text */
+.checkbox-dropdown:after {
+  content: "";
+  height: 0;
+  position: absolute;
+  width: 0;
+  border: 6px solid transparent;
+  border-top-color: #000;
+  top: 50%;
+  right: 10px;
+  margin-top: -3px;
+}
+
+/* Reverse the CSS arrow when the dropdown is active */
+.checkbox-dropdown.is-active:after {
+  border-bottom-color: #000;
+  border-top-style: hidden;
+}
+
+.checkbox-dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 110%; /* align the dropdown right below the dropdown text */
+  background-color: inherit;
+  border-radius: inherit;
+  /* align the dropdown to the left */
+  right: -15px; /* align the dropdown to the right */
+  opacity: 0; /* hide the dropdown */
+
+  transition: opacity 0.4s ease-in-out;
+  height: 140px;
+  overflow: scroll;
+  overflow-x: hidden;
+  pointer-events: none; /* avoid mouse click events inside the dropdown */
+}
+.is-active .checkbox-dropdown-list {
+  opacity: 1; /* display the dropdown */
+  pointer-events: auto; /* make sure that the user still can select checkboxes */
+}
+
+.checkbox-dropdown-list li label {
+  display: block;
+  border-bottom: 1px solid silver;
+  padding: 10px;
+  transition: all 0.2s ease-out;
+}
+
+.checkbox-dropdown-list li label:hover {
+  background-color: #0000003e;
+  color: white;
 }

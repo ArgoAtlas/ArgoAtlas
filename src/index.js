@@ -1,7 +1,6 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 
 const serverAddress = "http://localhost:5000";
 const darkStyle =
@@ -34,6 +33,42 @@ await map.once("load");
 const deckOverlay = new MapboxOverlay({
   interleaved: true,
   layers: [],
+});
+
+let showports = true;
+const portsCheck = document.getElementById("portsCheck");
+portsCheck.addEventListener("change", function () {
+  if (showports) {
+    map.setLayoutProperty("ports", "visibility", "none");
+    showports = false;
+  } else {
+    map.setLayoutProperty("ports", "visibility", "visible");
+    showports = true;
+  }
+});
+
+let showships = true;
+const shipsCheck = document.getElementById("shipsCheck");
+shipsCheck.addEventListener("change", function () {
+  if (showships) {
+    map.setLayoutProperty("ships", "visibility", "none");
+    showships = false;
+  } else {
+    map.setLayoutProperty("ships", "visibility", "visible");
+    showships = true;
+  }
+});
+
+let showchokepoints = true;
+const chokepointsCheck = document.getElementById("chokepointsCheck");
+chokepointsCheck.addEventListener("change", function () {
+  if (showchokepoints) {
+    map.setLayoutProperty("chokepoints", "visibility", "none");
+    showchokepoints = false;
+  } else {
+    map.setLayoutProperty("chokepoints", "visibility", "visible");
+    showchokepoints = true;
+  }
 });
 
 const tooltip = document.createElement("div");
@@ -123,9 +158,11 @@ function updateShipTooltip({ object, x, y }) {
 async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
+  const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
+  const chokepoints = await chokepointsResponse.json();
 
   deckOverlay.setProps({
     layers: [
@@ -133,30 +170,38 @@ async function updateMap() {
         id: "ports",
         data: ports,
         pointType: "circle+text",
-        filled: true,
-        stroked: true,
-        getLineColor: [0, 0, 255],
-        getFillColor: [0, 0, 0],
+        getFillColor: [0, 0, 255],
+        getLineColor: [0, 0, 0],
+        pointRadiusMinPixels: 1.5,
         pointRadiusMaxPixels: 5,
-        pointRadiusMinPixels: 2,
         pickable: true,
         onHover: updatePortTooltip,
       }),
       new ScatterplotLayer({
-        id: "points",
+        id: "ships",
         data: ships,
         filled: true,
         getPosition: (d) => [d.longitude, d.latitude],
         getFillColor: [255, 0, 0],
-        radiusMinPixels: 2,
-        radiusMaxPixels: 3,
+        radiusMinPixels: 1,
+        radiusMaxPixels: 5,
         pickable: true,
         onHover: updateShipTooltip,
+      }),
+      new ScatterplotLayer({
+        id: "chokepoints",
+        data: chokepoints,
+        getPosition: (d) => [d.longitude, d.latitude],
+        getFillColor: [100, 0, 0, 100], // rgba
+        getLineColor: [0, 0, 0],
+        radiusMinPixels: 12,
+        radiusMaxPixels: 24,
+        pickable: true,
       }),
     ],
   });
 
-  setTimeout(updateMap, 5000);
+  setTimeout(updateMap, 100);
 }
 
 map.addControl(deckOverlay);

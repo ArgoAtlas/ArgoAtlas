@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Suez Canal",
+    "latitude": 31.0011,
+    "longitude": 32.3114
+  },
+  {
+    "name": "Gibraltar",
+    "latitude": 35.9656,
+    "longitude": -5.5178
+  },
+  {
+    "name": "Panama Canal",
+    "latitude": 9.0001,
+    "longitude": -79.599
+  },
+  {
+    "name": "Bab El-Mandeb",
+    "latitude": 13.5,
+    "longitude": 42.75
+  },
+  {
+    "name": "Cape of Good Hope",
+    "latitude": -34.866,
+    "longitude": 19.427
+  },
+  {
+    "name": "Strait of Hormuz",
+    "latitude": 26.6102,
+    "longitude": 56.3817
+  },
+  {
+    "name": "Bosphorus",
+    "latitude": 41.0029,
+    "longitude": 28.9975
+  }
+]

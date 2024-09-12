@@ -8,6 +8,7 @@ const config = require("./config.json");
 const Ship = require("./models/ship");
 
 const ports = require("./ports.json");
+const chokepoints = require("./chokepoints.json");
 
 const WebSocket = require("ws");
 const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
@@ -94,6 +95,10 @@ app.get("/ships", async (req, res) => {
 
 app.get("/ports", (req, res) => {
   res.json(ports);
+});
+
+app.get("/chokepoints", (req, res) => {
+  res.json(chokepoints);
 });
 
 app.listen(5000);
