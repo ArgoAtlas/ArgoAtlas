@@ -166,6 +166,16 @@ async function updateMap() {
 
   deckOverlay.setProps({
     layers: [
+      new ScatterplotLayer({
+        id: "chokepoints",
+        data: chokepoints,
+        getPosition: (d) => [d.longitude, d.latitude],
+        getFillColor: [100, 0, 0, 100], // rgba
+        getLineColor: [0, 0, 0],
+        radiusScale: 60000, // prevent radius scaling after zooming far in
+        radiusMinPixels: 12,
+        pickable: true,
+      }),
       new GeoJsonLayer({
         id: "ports",
         data: ports,
@@ -187,16 +197,6 @@ async function updateMap() {
         radiusMaxPixels: 5,
         pickable: true,
         onHover: updateShipTooltip,
-      }),
-      new ScatterplotLayer({
-        id: "chokepoints",
-        data: chokepoints,
-        getPosition: (d) => [d.longitude, d.latitude],
-        getFillColor: [100, 0, 0, 100], // rgba
-        getLineColor: [0, 0, 0],
-        radiusScale: 60000, // prevent radius scaling after zooming far in
-        radiusMinPixels: 12,
-        pickable: true,
       }),
     ],
   });
