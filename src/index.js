@@ -194,8 +194,8 @@ async function updateMap() {
         getPosition: (d) => [d.longitude, d.latitude],
         getFillColor: [100, 0, 0, 100], // rgba
         getLineColor: [0, 0, 0],
+        radiusScale: 60000, // prevent radius scaling after zooming far in
         radiusMinPixels: 12,
-        radiusMaxPixels: 24,
         pickable: true,
       }),
     ],
