@@ -33,5 +33,10 @@
     "name": "Bosphorus",
     "latitude": 41.0029,
     "longitude": 28.9975
+  },
+  {
+    "name": "Straits of Malacca",
+    "latitude": 1.2083,
+    "longitude": 103.8444
   }
 ]

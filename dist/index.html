@@ -11,7 +11,7 @@
     <script src="main.js" defer></script>
 
     <div class="checkbox-dropdown">
-      Filter entities
+      Filters
       <ul class="checkbox-dropdown-list">
         <li>
           <label>
@@ -39,6 +39,15 @@
             Chokepoints</label
           >
         </li>
+        <li>
+          <label>
+            <input
+              type="checkbox"
+              id="chokepointsSecondaryCheck"
+              checked
+            />Secondary Chokepoints</label
+          >
+        </li>
       </ul>
     </div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -50,6 +59,24 @@
       $(".checkbox-dropdown ul").click(function (e) {
         e.stopPropagation();
       });
+    </script>
+
+    <script>
+      const listEl = document.querySelector("ul");
+
+      async function nig() {
+        const chokepointsResponse = await fetch(
+          `http://localhost:5000/chokepoints`,
+        );
+
+        fetch("chokepointsResponse.json")
+          .then((res) => res.json)
+          .then((chokepointsResponse) => {
+            chokepointsResponse.forEach((post) => {
+              listEl.insertAdjacentHTML("beforeend", `<li>${post.name}</li>`);
+            });
+          });
+      }
     </script>
   </body>
 </html>

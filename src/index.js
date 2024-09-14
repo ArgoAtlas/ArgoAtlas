@@ -71,6 +71,20 @@ chokepointsCheck.addEventListener("change", function () {
   }
 });
 
+let showchokepointsSecondary = true;
+const chokepointsSecondaryCheck = document.getElementById(
+  "chokepointsSecondaryCheck",
+);
+chokepointsSecondaryCheck.addEventListener("change", function () {
+  if (showchokepointsSecondary) {
+    map.setLayoutProperty("chokepointsSecondary", "visibility", "none");
+    showchokepointsSecondary = false;
+  } else {
+    map.setLayoutProperty("chokepointsSecondary", "visibility", "visible");
+    showchokepointsSecondary = true;
+  }
+});
+
 const tooltip = document.createElement("div");
 tooltip.id = "tooltip";
 
@@ -99,6 +113,7 @@ function createTooltipEntry(title, message) {
 }
 
 function updatePortTooltip({ object, x, y }) {
+  if (!showports) return;
   if (object) {
     tooltip.style.display = "block";
     tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
@@ -124,6 +139,7 @@ function updatePortTooltip({ object, x, y }) {
 }
 
 function updateShipTooltip({ object, x, y }) {
+  if (!showships) return;
   if (object) {
     tooltip.style.display = "block";
     tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
@@ -159,10 +175,14 @@ async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
   const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
+  const chokepointsSecondaryResponse = await fetch(
+    `${serverAddress}/chokepointsSecondary`,
+  );
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
   const chokepoints = await chokepointsResponse.json();
+  const chokepointsSecondary = await chokepointsSecondaryResponse.json();
 
   deckOverlay.setProps({
     layers: [
@@ -174,6 +194,16 @@ async function updateMap() {
         getLineColor: [0, 0, 0],
         radiusScale: 60000, // prevent radius scaling after zooming far in
         radiusMinPixels: 12,
+        pickable: true,
+      }),
+      new ScatterplotLayer({
+        id: "chokepointsSecondary",
+        data: chokepointsSecondary,
+        getPosition: (d) => [d.longitude, d.latitude],
+        getFillColor: [100, 0, 0, 100], // rgba
+        getLineColor: [0, 0, 0],
+        radiusScale: 20000, // prevent radius scaling after zooming far in
+        radiusMinPixels: 7,
         pickable: true,
       }),
       new GeoJsonLayer({
