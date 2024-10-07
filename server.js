@@ -16,13 +16,14 @@ const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 
 mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
 
-async function updatePosition(mmsi, message) {
-  const ships = await Ship.find({ mmsi: mmsi });
+async function updatePosition(mmsi, time, message) {
+  const ships = await Ship.find({ mmsi: mmsi }); // avoid duplicates
 
   if (ships.length > 0) {
     ships.forEach((ship) => {
       ship.position.longitude = message.Longitude;
       ship.position.latitude = message.Latitude;
+      ship.time = time;
       ship.save();
     });
   } else {
@@ -35,18 +36,20 @@ async function updatePosition(mmsi, message) {
         longitude: message.Longitude,
         latitude: message.Latitude,
       },
+      time: time,
     });
   }
 }
 
-async function updateShipData(mmsi, message) {
-  const ships = await Ship.find({ mmsi: mmsi });
+async function updateShipData(mmsi, time, message) {
+  const ships = await Ship.find({ mmsi: mmsi }); // avoid duplicates
 
   if (ships.length > 0) {
     ships.forEach((ship) => {
       ship.name = message.Name;
       ship.callSign = message.CallSign;
       ship.destination = message.Destination;
+      ship.time = time;
       ship.save();
     });
   } else {
@@ -59,6 +62,7 @@ async function updateShipData(mmsi, message) {
         longitude: -180,
         latitude: -90,
       },
+      time: time,
     });
   }
 }
@@ -81,10 +85,18 @@ socket.addEventListener("message", (event) => {
 
   switch (message.MessageType) {
     case "PositionReport":
-      updatePosition(message.MetaData.MMSI, message.Message.PositionReport);
+      updatePosition(
+        message.MetaData.MMSI,
+        message.MetaData.time_utc,
+        message.Message.PositionReport,
+      );
       break;
     case "ShipStaticData":
-      updateShipData(message.MetaData.MMSI, message.Message.ShipStaticData);
+      updateShipData(
+        message.MetaData.MMSI,
+        message.MetaData.time_utc,
+        message.Message.ShipStaticData,
+      );
       break;
   }
 });

@@ -166,6 +166,7 @@ function updateShipTooltip({ object, x, y }) {
     tooltipEntries.appendChild(
       createTooltipEntry("Destination:", object.destination),
     );
+    tooltipEntries.appendChild(createTooltipEntry("Last Update:", object.time));
   } else {
     tooltip.style.display = "none";
   }

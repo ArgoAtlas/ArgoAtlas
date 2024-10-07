@@ -54,19 +54,47 @@ body,
   position: absolute;
   top: 20px;
   left: 20px;
-  width: 150px;
+  width: 180px;
   background-color: rgba(63, 63, 63, 0.78);
   color: rgba(255, 255, 255, 0.782);
   border-radius: 7px;
   padding: 5px;
 }
 
-/* Display CSS arrow to the right of the dropdown text */
-.checkbox-dropdown:after {
-  content: "";
-  height: 0;
+.layers-dropdown {
   position: absolute;
-  width: 0;
+  top: 200px;
+  left: 20px;
+  width: 250px;
+  background-color: rgba(63, 63, 63, 0.78);
+  color: rgba(255, 255, 255, 0.782);
+  border-radius: 7px;
+  padding: 5px;
+}
+
+.elements-dropdown {
+  position: relative;
+  width: 250px;
+  color: rgba(255, 255, 255, 0.782);
+  border-radius: 7px;
+  padding: 5px;
+}
+
+/* Display CSS arrow to the right of the dropdown text */
+.checkbox-dropdown:after,
+.layers-dropdown:after {
+  content: "";
+  position: absolute;
+  border: 6px solid transparent;
+  border-top-color: #000;
+  top: 50%;
+  right: 10px;
+  margin-top: -3px;
+}
+
+.elements-dropdown:after {
+  content: "";
+  position: absolute;
   border: 6px solid transparent;
   border-top-color: #000;
   top: 50%;
@@ -75,9 +103,16 @@ body,
 }
 
 /* Reverse the CSS arrow when the dropdown is active */
-.checkbox-dropdown.is-active:after {
+.checkbox-dropdown.is-active:after,
+.layers-dropdown.iss-active:after {
   border-bottom-color: #000;
   border-top-style: hidden;
+}
+
+.elements-dropdown.isss-active:after {
+  border-bottom-color: #000;
+  border-top-style: hidden;
+  margin-top: -75px;
 }
 
 .checkbox-dropdown-list {
@@ -89,7 +124,7 @@ body,
   background-color: inherit;
   border-radius: inherit;
   /* align the dropdown to the left */
-  right: -15px; /* align the dropdown to the right */
+  right: -17px; /* align the dropdown to the right */
   opacity: 0; /* hide the dropdown */
 
   transition: opacity 0.4s ease-in-out;
@@ -98,19 +133,76 @@ body,
   overflow-x: hidden;
   pointer-events: none; /* avoid mouse click events inside the dropdown */
 }
-.is-active .checkbox-dropdown-list {
+
+.layers-dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 110%; /* align the dropdown right below the dropdown text */
+  background-color: inherit;
+  border-radius: inherit;
+  /* align the dropdown to the left */
+  right: -17px; /* align the dropdown to the right */
+  opacity: 0; /* hide the dropdown */
+
+  transition: opacity 0.4s ease-in-out;
+  height: 240px;
+  overflow: scroll;
+  overflow-x: hidden;
+  pointer-events: none; /* avoid mouse click events inside the dropdown */
+}
+
+.elements-dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 110%; /* align the dropdown right below the dropdown text */
+  background-color: rgba(63, 63, 63, 0.78);
+  border-radius: inherit;
+  left: 10px; /* align the dropdown to the left */
+  opacity: 0; /* hide the dropdown */
+
+  transition: opacity 0.4s ease-in-out;
+  height: 140px;
+  overflow: scroll;
+  overflow-x: hidden;
+  pointer-events: none; /* avoid mouse click events inside the dropdown */
+}
+
+.is-active .checkbox-dropdown-list,
+.iss-active .layers-dropdown-list {
   opacity: 1; /* display the dropdown */
   pointer-events: auto; /* make sure that the user still can select checkboxes */
 }
 
-.checkbox-dropdown-list li label {
+.isss-active .elements-dropdown-list {
+  opacity: 1;
+  pointer-events: auto;
+  top: 45px;
+}
+
+.issss-active {
+  height: 180px;
+}
+
+.isssss-active {
+  margin-top: -75px;
+}
+
+.checkbox-dropdown-list li label,
+.layers-dropdown-list li label,
+.elements-dropdown-list li label {
   display: block;
   border-bottom: 1px solid silver;
   padding: 8px;
   transition: all 0.2s ease-out;
 }
 
-.checkbox-dropdown-list li label:hover {
+.checkbox-dropdown-list li label:hover,
+.layers-dropdown-list li label:hover,
+.elements-dropdown-list li label:hover {
   background-color: #0000003e;
   color: white;
 }

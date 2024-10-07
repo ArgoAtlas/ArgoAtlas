@@ -9,6 +9,7 @@ const shipSchema = new mongoose.Schema({
     longitude: Number,
     latitude: Number,
   },
+  time: String,
 });
 
 module.exports = mongoose.model("Ship", shipSchema);
