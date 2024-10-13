@@ -30,6 +30,11 @@ window
 
 await map.once("load");
 
+function convertGeoToScreen([longitude, latitude]) {
+  const point = map.project([longitude, latitude]);
+  return [point.x, point.y]; // Return the x and y pixel positions
+}
+
 const deckOverlay = new MapboxOverlay({
   interleaved: true,
   layers: [],
@@ -112,12 +117,15 @@ function createTooltipEntry(title, message) {
   return entry;
 }
 
-function updatePortTooltip({ object, x, y }) {
-  if (!showports) return;
+function updatePortTooltip({ object }) {
+  if (!showports) return; // prevent display of tooltip when filter unchecked
   if (object) {
     tooltip.style.display = "block";
+
+    const [x, y] = convertGeoToScreen(object.geometry.coordinates);
     tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
     tooltip.style.top = `${y + 10}px`;
+
     tooltipTitle.innerText = object.properties.name;
     tooltipEntries.textContent = "";
     tooltipEntries.appendChild(createTooltipEntry("Type:", "Port"));
@@ -138,12 +146,15 @@ function updatePortTooltip({ object, x, y }) {
   }
 }
 
-function updateShipTooltip({ object, x, y }) {
-  if (!showships) return;
+function updateShipTooltip({ object }) {
+  if (!showships) return; // prevent display of tooltip when filter unchecked
   if (object) {
     tooltip.style.display = "block";
+
+    const [x, y] = convertGeoToScreen([object.longitude, object.latitude]);
     tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
     tooltip.style.top = `${y + 10}px`;
+
     tooltipTitle.innerText = object.name;
     tooltipEntries.textContent = "";
     tooltipEntries.appendChild(createTooltipEntry("Type:", "Ship"));
@@ -172,19 +183,19 @@ function updateShipTooltip({ object, x, y }) {
   }
 }
 
+const portsResponse = await fetch(`${serverAddress}/ports`);
+const shipsResponse = await fetch(`${serverAddress}/ships`);
+const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
+const chokepointsSecondaryResponse = await fetch(
+  `${serverAddress}/chokepointsSecondary`,
+);
+
+const ports = await portsResponse.json();
+const ships = await shipsResponse.json();
+const chokepoints = await chokepointsResponse.json();
+const chokepointsSecondary = await chokepointsSecondaryResponse.json();
+
 async function updateMap() {
-  const portsResponse = await fetch(`${serverAddress}/ports`);
-  const shipsResponse = await fetch(`${serverAddress}/ships`);
-  const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
-  const chokepointsSecondaryResponse = await fetch(
-    `${serverAddress}/chokepointsSecondary`,
-  );
-
-  const ports = await portsResponse.json();
-  const ships = await shipsResponse.json();
-  const chokepoints = await chokepointsResponse.json();
-  const chokepointsSecondary = await chokepointsSecondaryResponse.json();
-
   deckOverlay.setProps({
     layers: [
       new ScatterplotLayer({
@@ -235,7 +246,55 @@ async function updateMap() {
 
   setTimeout(updateMap, 100);
 }
-
 map.addControl(deckOverlay);
 
+async function layersSetup() {
+  const portsUl = document.getElementById("mpj");
+  const shipsUl = document.getElementById("mpjj");
+  const chokepointsUl = document.getElementById("mpjjj");
+  const chokepointsSecondaryUl = document.getElementById("mpjjjj");
+
+  for (const port of ports.features) {
+    portsUl.innerHTML += `<li><label>${port.properties.name}</label><li>`;
+  }
+  for (const ship of ships) {
+    if (
+      ship.latitude > 47 &&
+      ship.latitude < 50 &&
+      ship.longitude > 7 &&
+      ship.longitude < 10
+    ) {
+      // Ships in the area of Baden-Württemberg
+      shipsUl.innerHTML += `<li><label>${ship.name}</label><li>`;
+    }
+  }
+  for (const chokepoint of chokepoints) {
+    chokepointsUl.innerHTML += `<li><label>${chokepoint.name}</label><li>`;
+  }
+  for (const chokepointSecondary of chokepointsSecondary) {
+    chokepointsSecondaryUl.innerHTML += `<li><label>${chokepointSecondary.id}</label><li>`;
+  }
+
+  portsUl.querySelectorAll("li").forEach(function (li) {
+    li.addEventListener("mouseenter", function () {
+      for (const port of ports.features) {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == port.properties.name) {
+          updatePortTooltip({ object: port });
+        }
+      }
+    });
+  });
+
+  shipsUl.querySelectorAll("li").forEach(function (li) {
+    li.addEventListener("mouseenter", function () {
+      for (const ship of ships) {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == ship.name) {
+          updateShipTooltip({ object: ship });
+        }
+      }
+    });
+  });
+}
+
 updateMap();
+layersSetup();

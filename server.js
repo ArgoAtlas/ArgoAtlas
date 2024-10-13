@@ -23,7 +23,7 @@ async function updatePosition(mmsi, time, message) {
     ships.forEach((ship) => {
       ship.position.longitude = message.Longitude;
       ship.position.latitude = message.Latitude;
-      ship.time = time;
+      ship.time = time.slice(0, 19) + time.slice(-10); // avoid display of milliseconds
       ship.save();
     });
   } else {
@@ -36,7 +36,7 @@ async function updatePosition(mmsi, time, message) {
         longitude: message.Longitude,
         latitude: message.Latitude,
       },
-      time: time,
+      time: time.slice(0, 19) + time.slice(-10), // avoid display of milliseconds
     });
   }
 }
@@ -49,7 +49,7 @@ async function updateShipData(mmsi, time, message) {
       ship.name = message.Name;
       ship.callSign = message.CallSign;
       ship.destination = message.Destination;
-      ship.time = time;
+      ship.time = time.slice(0, 19) + time.slice(-10); // avoid display of milliseconds
       ship.save();
     });
   } else {
@@ -62,7 +62,7 @@ async function updateShipData(mmsi, time, message) {
         longitude: -180,
         latitude: -90,
       },
-      time: time,
+      time: time.slice(0, 19) + time.slice(-10), // avoid display of milliseconds
     });
   }
 }

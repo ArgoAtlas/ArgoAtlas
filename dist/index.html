@@ -50,7 +50,7 @@
         </li>
         <li>
           <div class="elements-dropdown">
-            <label> Ships </label>
+            <label> Ships (Baden-Württemberg) </label>
             <ul id="mpjj" class="elements-dropdown-list"></ul>
             <!-----------------ships displayed here in a list-------------------->
           </div>
@@ -98,47 +98,6 @@
       $(".elements-dropdown ul").click(function (e) {
         e.stopPropagation();
       });
-    </script>
-
-    <script>
-      const serverAddress = "http://localhost:5000";
-      var i = 0;
-      main();
-
-      async function main() {
-        const portsResponse = await fetch(`${serverAddress}/ports`);
-        const shipsResponse = await fetch(`${serverAddress}/ships`);
-        const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
-        const chokepointsSecondaryResponse = await fetch(
-          `${serverAddress}/chokepointsSecondary`,
-        );
-
-        const ports = await portsResponse.json();
-        const ships = await shipsResponse.json();
-        const chokepoints = await chokepointsResponse.json();
-        const chokepointsSecondary = await chokepointsSecondaryResponse.json();
-
-        const portsUl = document.getElementById("mpj");
-        const shipsUl = document.getElementById("mpjj");
-        const chokepointsUl = document.getElementById("mpjjj");
-        const chokepointsSecondaryUl = document.getElementById("mpjjjj");
-
-        for (const port of ports.features) {
-          portsUl.innerHTML += `<li><label>${port.properties.name}</label><li>`;
-        }
-        for (const ship of ships) {
-          i++;
-          if (i < 200) {
-            shipsUl.innerHTML += `<li><label>${ship.name}</label><li>`;
-          }
-        }
-        for (const chokepoint of chokepoints) {
-          chokepointsUl.innerHTML += `<li><label>${chokepoint.name}</label><li>`;
-        }
-        for (const chokepointSecondary of chokepointsSecondary) {
-          chokepointsSecondaryUl.innerHTML += `<li><label>${chokepointSecondary.id}</label><li>`;
-        }
-      }
     </script>
   </body>
 </html>
