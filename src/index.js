@@ -1,5 +1,10 @@
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { GeoJsonLayer, ScatterplotLayer, PathLayer } from "@deck.gl/layers";
+import {
+  GeoJsonLayer,
+  ScatterplotLayer,
+  PathLayer,
+  LineLayer,
+} from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -126,11 +131,13 @@ async function updateMap() {
   const shipsResponse = await fetch(`${serverAddress}/ships`);
   const pathsResponse = await fetch(`${serverAddress}/paths`);
   const graphResponse = await fetch(`${serverAddress}/graph`);
+  const proximityGraphResponse = await fetch(`${serverAddress}/proximityGraph`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
   const paths = await pathsResponse.json();
   const graph = await graphResponse.json();
+  const proximityGraph = await proximityGraphResponse.json();
 
   deckOverlay.setProps({
     layers: [
@@ -158,21 +165,29 @@ async function updateMap() {
         pickable: true,
         onHover: updateShipTooltip,
       }),
-      new ScatterplotLayer({
-        id: "graph",
-        data: graph,
-        filled: true,
-        getPosition: (d) => [d.position[0], d.position[1]],
-        getFillColor: [255, 255, 255],
-        radiusMinPixels: 2,
-        radiusMaxPixels: 3,
-      }),
-      new PathLayer({
-        id: "paths",
-        data: paths,
-        getColor: [0, 255, 0],
-        getPath: (d) => d.points,
-        widthMinPixels: 1,
+      // new ScatterplotLayer({
+      //   id: "graph",
+      //   data: graph,
+      //   filled: true,
+      //   getPosition: (d) => [d.position[0], d.position[1]],
+      //   getFillColor: [255, 255, 255],
+      //   radiusMinPixels: 2,
+      //   radiusMaxPixels: 3,
+      // }),
+      // new PathLayer({
+      //   id: "paths",
+      //   data: paths,
+      //   getColor: [0, 255, 0],
+      //   getPath: (d) => d.points,
+      //   widthMinPixels: 1,
+      // }),
+      new LineLayer({
+        id: "proximityGraph",
+        data: proximityGraph,
+        getColor: [0, 255, 255],
+        getSourcePosition: (d) => [d.coords[0], d.coords[1]],
+        getTargetPosition: (d) => [d.coords[2], d.coords[3]],
+        getWidth: 5,
       }),
     ],
   });
