@@ -5,6 +5,7 @@ import config from "./config.json" with { type: "json" };
 import Ship from "./models/ship.js";
 import Path from "./models/path.js";
 import Graph from "./models/graph.js";
+import ProximityGraph from "./models/proximityGraph.js";
 import GraphHelper from "./src/graphHelper.js";
 import ports from "./ports.json" with { type: "json" };
 import WebSocket from "ws";
@@ -330,6 +331,11 @@ app.get("/paths", async (req, res) => {
 app.get("/graph", async (req, res) => {
   const graph = await Graph.find();
   res.json(graph);
+});
+
+app.get("/proximityGraph", async (req, res) => {
+  const proximityGraph = await ProximityGraph.find();
+  res.json(proximityGraph);
 });
 
 app.get("/ports", (req, res) => {
