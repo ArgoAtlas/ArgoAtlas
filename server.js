@@ -19,6 +19,9 @@ const decisionInterval = 1;
 const referenceValue = decisionInterval / 2;
 const maximumEntries = 5;
 
+// amount of neighbors used when creating k-nearest neighbors graph
+const k = 3;
+
 mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
 
 // compute cumulative sum, used to detect deviations
@@ -203,7 +206,12 @@ async function updatePath(mmsi, message) {
   ) {
     data.points.push([message.Longitude, message.Latitude]);
 
-    const closePoints = await Graph.find({
+    const newVertex = new Graph({
+      position: [message.Longitude, message.Latitude],
+    });
+    newVertex.save();
+
+    const connectionPoints = await Graph.find({
       position: {
         $near: {
           $geometry: {
@@ -213,31 +221,12 @@ async function updatePath(mmsi, message) {
           $maxDistance: 100,
         },
       },
+    }).limit(k);
+
+    connectionPoints.forEach((point) => {
+      if (newVertex.id !== point.id)
+        GraphHelper.addEdge(newVertex.id, point.id);
     });
-
-    if (closePoints.length < 1) {
-      const newVertex = new Graph({
-        position: [message.Longitude, message.Latitude],
-      });
-      newVertex.save();
-
-      const connectionPoints = await Graph.find({
-        position: {
-          $near: {
-            $geometry: {
-              type: "Point",
-              coordinates: [message.Longitude, message.Latitude],
-            },
-            $maxDistance: 200,
-          },
-        },
-      });
-
-      connectionPoints.forEach((point) => {
-        if (newVertex.id !== point.id)
-          GraphHelper.addEdge(newVertex.id, point.id);
-      });
-    }
 
     data.latitude.controlPositive = 0;
     data.latitude.controlNegative = 0;
