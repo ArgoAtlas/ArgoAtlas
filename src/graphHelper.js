@@ -1,4 +1,5 @@
 import Graph from "../models/graph.js";
+import ProximityGraph from "../models/proximityGraph.js";
 
 export default class GraphHelper {
   static async addVertex(position) {
@@ -16,6 +17,15 @@ export default class GraphHelper {
 
     sourceVertex.save();
     destinationVertex.save();
+
+    await ProximityGraph.create({
+      coords: [
+        sourceVertex.position[0],
+        sourceVertex.position[1],
+        destinationVertex.position[0],
+        sourceVertex.position[1],
+      ],
+    });
   }
 
   static async removeEdge(sourceId, destinationId) {
