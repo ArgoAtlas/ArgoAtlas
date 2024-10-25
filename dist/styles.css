@@ -6,11 +6,11 @@ body,
   padding: 0;
   height: 100%;
   width: 100%;
+  background-color: #000;
 }
 
 #tooltip {
   position: absolute;
-  z-index: 1;
   pointer-events: none;
   background: rgba(63, 63, 63, 0.78);
   border-radius: 10px;
@@ -50,31 +50,103 @@ body,
   justify-content: space-between;
 }
 
-.checkbox-dropdown {
-  position: absolute;
+.ArgoAtlas {
+  position: relative;
   top: 20px;
   left: 20px;
-  width: 180px;
-  background-color: rgba(63, 63, 63, 0.78);
-  color: rgba(255, 255, 255, 0.782);
+  width: 200px;
+  height: 30px;
+  background-color: rgba(0, 0, 0, 0.719);
+  color: rgb(255, 255, 255);
+  border-radius: 5px;
+  padding: 5px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Indicator {
+  position: relative;
+  top: 10px;
+  left: 20px;
+  width: 150px;
+  height: 120px;
+  background-color: rgba(63, 63, 63, 0.6);
+  color: rgba(255, 255, 255, 1);
+  border-radius: 7px;
+  padding: 10px;
+  font-size: 12px;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
+}
+
+.Indicator p {
+  margin: 0; /* Remove default margins */
+  padding: 4px 0; /* Optional: Add some padding for spacing */
+}
+
+.checkbox-dropdown {
+  position: relative;
+  top: 20px;
+  left: 20px;
+  width: 160px;
+  background-color: rgba(63, 63, 63, 0.6);
+  color: rgba(255, 255, 255, 1);
   border-radius: 7px;
   padding: 5px;
+  font-size: 13px;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
 }
 
 .layers-dropdown {
-  position: absolute;
-  top: 200px;
+  position: relative;
+  top: 30px;
   left: 20px;
-  width: 250px;
-  background-color: rgba(63, 63, 63, 0.78);
-  color: rgba(255, 255, 255, 0.782);
+  width: 160px;
+  background-color: rgba(63, 63, 63, 0.6);
+  color: rgba(255, 255, 255, 1);
   border-radius: 7px;
   padding: 5px;
+  font-size: 13px;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
 }
 
 .elements-dropdown {
   position: relative;
-  width: 250px;
+  width: 160px;
   color: rgba(255, 255, 255, 0.782);
   border-radius: 7px;
   padding: 5px;
@@ -86,7 +158,18 @@ body,
   content: "";
   position: absolute;
   border: 6px solid transparent;
-  border-top-color: #000;
+  border-top-color: #ffffff;
+  top: 50%;
+  right: 10px;
+  margin-top: -3px;
+}
+
+.ArgoAtlas:after {
+  content: "";
+  position: absolute;
+  border: 6px solid transparent;
+  border-top-style: hidden;
+  border-bottom-color: #ffffff;
   top: 50%;
   right: 10px;
   margin-top: -3px;
@@ -96,26 +179,36 @@ body,
   content: "";
   position: absolute;
   border: 6px solid transparent;
-  border-top-color: #000;
+  border-top-color: #ffffff;
   top: 50%;
   right: 10px;
   margin-top: -3px;
 }
 
 /* Reverse the CSS arrow when the dropdown is active */
+.checkbox-dropdown.is-active {
+  margin-bottom: 140px;
+}
+
 .checkbox-dropdown.is-active:after,
 .layers-dropdown.iss-active:after {
-  border-bottom-color: #000;
+  border-bottom-color: #ffffff;
   border-top-style: hidden;
 }
 
+.ArgoAtlas.isnt-active:after {
+  border-top-color: #ffffff;
+  border-top-style: solid;
+  border-bottom-style: hidden;
+}
+
 .elements-dropdown.isss-active:after {
-  border-bottom-color: #000;
+  border-bottom-color: #ffffff;
   border-top-style: hidden;
   margin-top: -75px;
 }
 
-.checkbox-dropdown-list {
+.ArgoAtlas-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -124,7 +217,30 @@ body,
   background-color: inherit;
   border-radius: inherit;
   /* align the dropdown to the left */
-  right: -17px; /* align the dropdown to the right */
+  width: 210px;
+  right: 0px; /* align the dropdown to the right */
+  opacity: 1; /* hide the dropdown */
+
+  transition: opacity 0.4s ease-in-out;
+  height: 625px;
+  overflow: scroll;
+  overflow-x: hidden;
+  pointer-events: auto; /* allow mouse click events inside the dropdown */
+  overflow: hidden;
+}
+
+.checkbox-dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 178px;
+  position: absolute;
+  top: 110%; /* align the dropdown right below the dropdown text */
+  background-color: inherit;
+  color: rgba(200, 200, 200, 1);
+  border-radius: inherit;
+  /* align the dropdown to the left */
+  right: -8px; /* align the dropdown to the right */
   opacity: 0; /* hide the dropdown */
 
   transition: opacity 0.4s ease-in-out;
@@ -141,9 +257,10 @@ body,
   position: absolute;
   top: 110%; /* align the dropdown right below the dropdown text */
   background-color: inherit;
+  color: rgba(200, 200, 200, 1);
   border-radius: inherit;
   /* align the dropdown to the left */
-  right: -17px; /* align the dropdown to the right */
+  right: -8px; /* align the dropdown to the right */
   opacity: 0; /* hide the dropdown */
 
   transition: opacity 0.4s ease-in-out;
@@ -157,9 +274,11 @@ body,
   list-style: none;
   margin: 0;
   padding: 0;
+  width: 150px;
   position: absolute;
   top: 110%; /* align the dropdown right below the dropdown text */
   background-color: rgba(63, 63, 63, 0.78);
+  color: rgba(200, 200, 200, 1);
   border-radius: inherit;
   left: 10px; /* align the dropdown to the left */
   opacity: 0; /* hide the dropdown */
@@ -177,6 +296,11 @@ body,
   pointer-events: auto; /* make sure that the user still can select checkboxes */
 }
 
+.isnt-active .ArgoAtlas-list {
+  opacity: 0; /* display the dropdown */
+  pointer-events: none; /* make sure that the user still can select checkboxes */
+}
+
 .isss-active .elements-dropdown-list {
   opacity: 1;
   pointer-events: auto;
@@ -187,22 +311,103 @@ body,
   height: 180px;
 }
 
-.isssss-active {
-  margin-top: -75px;
-}
-
 .checkbox-dropdown-list li label,
 .layers-dropdown-list li label,
-.elements-dropdown-list li label {
+.elements-dropdown-list li label,
+.ArgoAtlas-list li label {
   display: block;
-  border-bottom: 1px solid silver;
+  border-bottom: 1px solid rgb(49, 49, 49);
   padding: 8px;
   transition: all 0.2s ease-out;
 }
 
 .checkbox-dropdown-list li label:hover,
 .layers-dropdown-list li label:hover,
-.elements-dropdown-list li label:hover {
+.elements-dropdown-list li label:hover,
+.ArgoAtlas-list li label:hover {
   background-color: #0000003e;
-  color: white;
+  color: #ffffff;
+}
+
+/* Scrollbar Styles for WebKit Browsers */
+.checkbox-dropdown-list::-webkit-scrollbar,
+.layers-dropdown-list::-webkit-scrollbar,
+.elements-dropdown-list::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+.checkbox-dropdown-list::-webkit-scrollbar-thumb,
+.layers-dropdown-list::-webkit-scrollbar-thumb,
+.elements-dropdown-list::-webkit-scrollbar-thumb {
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.782
+  ); /* Thumb (the draggable part) color */
+  border-radius: 5px; /* Rounded corners for the thumb */
+}
+
+.checkbox-dropdown-list::-webkit-scrollbar-track,
+.layers-dropdown-list::-webkit-scrollbar-track,
+.elements-dropdown-list::-webkit-scrollbar-track {
+  background-color: rgba(
+    63,
+    63,
+    63,
+    0.78
+  ); /* Track (the background area of the scrollbar) color */
+  border-radius: 5px; /* Rounded corners for the thumb */
+}
+
+.globe-icon {
+  width: 20px; /* Adjust the width */
+  height: 20px; /* Adjust the height */
+  margin-right: 10px; /* Optional: Add space between the icon and text */
+}
+
+::-webkit-scrollbar {
+  width: 12px; /* Width of the vertical scrollbar */
+  height: 12px; /* Height of the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #ccc; /* Light mode thumb color */
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light mode track color */
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background-color: #555; /* Dark mode thumb color */
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #333; /* Dark mode track color */
+  }
+}
+
+.blinking-dot {
+  display: inline-block;
+  width: 6px; /* Size of the dot */
+  height: 6px; /* Size of the dot */
+  background-color: red; /* Color of the dot */
+  border-radius: 50%; /* Make it round */
+  margin-left: 27px; /* Space between the text and the dot */
+  animation: blink-animation 1s steps(5, start) infinite; /* Animation */
+}
+
+/* Animation keyframes */
+@keyframes blink-animation {
+  0%,
+  100% {
+    opacity: 1; /* Fully visible */
+  }
+  50% {
+    opacity: 0; /* Invisible */
+  }
 }

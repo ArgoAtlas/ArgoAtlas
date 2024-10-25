@@ -2,7 +2,9 @@ import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
 
-const serverAddress = "http://localhost:5000";
+import moment from "moment-timezone";
+
+const serverAddress = "http://192.168.188.23:5000"; // instead of http://localhost:5000 to access data from other devices as well
 const darkStyle =
   "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 const lightStyle =
@@ -11,8 +13,8 @@ const lightStyle =
 const map = new Map({
   container: "map",
   style: window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? lightStyle
-    : darkStyle,
+    ? darkStyle
+    : lightStyle,
   center: [0.45, 51.47],
   zoom: 2,
   minZoom: 1,
@@ -92,14 +94,11 @@ chokepointsSecondaryCheck.addEventListener("change", function () {
 
 const tooltip = document.createElement("div");
 tooltip.id = "tooltip";
-
 const tooltipTitle = document.createElement("h3");
 const tooltipEntries = document.createElement("div");
 tooltipEntries.id = "tooltipEntries";
-
 tooltip.appendChild(tooltipTitle);
 tooltip.appendChild(tooltipEntries);
-
 document.body.append(tooltip);
 
 function createTooltipEntry(title, message) {
@@ -183,26 +182,37 @@ function updateShipTooltip({ object }) {
   }
 }
 
-const portsResponse = await fetch(`${serverAddress}/ports`);
-const shipsResponse = await fetch(`${serverAddress}/ships`);
-const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
-const chokepointsSecondaryResponse = await fetch(
-  `${serverAddress}/chokepointsSecondary`,
-);
+async function fetchData() {
+  const [
+    portsResponse,
+    shipsResponse,
+    chokepointsResponse,
+    chokepointsSecondaryResponse,
+  ] = await Promise.all([
+    fetch(`${serverAddress}/ports`),
+    fetch(`${serverAddress}/ships`),
+    fetch(`${serverAddress}/chokepoints`),
+    fetch(`${serverAddress}/chokepointsSecondary`),
+  ]);
 
-const ports = await portsResponse.json();
-const ships = await shipsResponse.json();
-const chokepoints = await chokepointsResponse.json();
-const chokepointsSecondary = await chokepointsSecondaryResponse.json();
+  const ports = await portsResponse.json();
+  const ships = await shipsResponse.json();
+  const chokepoints = await chokepointsResponse.json();
+  const chokepointsSecondary = await chokepointsSecondaryResponse.json();
+
+  return { ports, ships, chokepoints, chokepointsSecondary }; // return all datasets -> to be used in other functions
+}
 
 async function updateMap() {
+  const { ports, ships, chokepoints, chokepointsSecondary } = await fetchData();
+
   deckOverlay.setProps({
     layers: [
       new ScatterplotLayer({
         id: "chokepoints",
         data: chokepoints,
         getPosition: (d) => [d.longitude, d.latitude],
-        getFillColor: [100, 0, 0, 100], // rgba
+        getFillColor: [255, 0, 0, 100], // rgba
         getLineColor: [0, 0, 0],
         radiusScale: 60000, // prevent radius scaling after zooming far in
         radiusMinPixels: 12,
@@ -212,21 +222,20 @@ async function updateMap() {
         id: "chokepointsSecondary",
         data: chokepointsSecondary,
         getPosition: (d) => [d.longitude, d.latitude],
-        getFillColor: [100, 0, 0, 100], // rgba
+        getFillColor: [255, 0, 0, 100], // rgba
         getLineColor: [0, 0, 0],
         radiusScale: 20000, // prevent radius scaling after zooming far in
         radiusMinPixels: 7,
         pickable: true,
       }),
-      new GeoJsonLayer({
+      new ScatterplotLayer({
         id: "ports",
         data: ports,
-        pointType: "circle+text",
-        getFillColor: [0, 0, 255],
-        getLineColor: [0, 0, 0],
+        getPosition: (d) => d.geometry.coordinates,
+        getFillColor: [255, 226, 82],
         radiusScale: 100,
-        pointRadiusMinPixels: 1.5,
-        pointRadiusMaxPixels: 15,
+        radiusMinPixels: 1.5,
+        radiusMaxPixels: 15,
         pickable: true,
         onHover: updatePortTooltip,
       }),
@@ -244,17 +253,19 @@ async function updateMap() {
     ],
   });
 
-  setTimeout(updateMap, 100);
+  setTimeout(updateMap, 1000);
 }
 map.addControl(deckOverlay);
 
 async function layersSetup() {
+  const { ports, ships, chokepoints, chokepointsSecondary } = await fetchData();
+
   const portsUl = document.getElementById("mpj");
   const shipsUl = document.getElementById("mpjj");
   const chokepointsUl = document.getElementById("mpjjj");
   const chokepointsSecondaryUl = document.getElementById("mpjjjj");
 
-  for (const port of ports.features) {
+  for (const port of ports) {
     portsUl.innerHTML += `<li><label>${port.properties.name}</label><li>`;
   }
   for (const ship of ships) {
@@ -277,7 +288,7 @@ async function layersSetup() {
 
   portsUl.querySelectorAll("li").forEach(function (li) {
     li.addEventListener("mouseenter", function () {
-      for (const port of ports.features) {
+      for (const port of ports) {
         if (li.innerHTML.replace(/<\/?label>/g, "") == port.properties.name) {
           updatePortTooltip({ object: port });
         }
@@ -296,5 +307,28 @@ async function layersSetup() {
   });
 }
 
+async function updateShipIndicator() {
+  const { ships } = await fetchData();
+
+  const totalShips = ships.length;
+  const latestShipUpdate = ships.reduce((latest, current) => {
+    // reduce json to 1 object comparison-based
+    const latestTime = new Date(latest.time);
+    const currentTime = new Date(current.time);
+    return currentTime > latestTime ? current : latest;
+  }, ships[0]);
+  const latestShip = ships[ships.length - 1];
+  console.log(latestShip);
+
+  const indicatorDiv = document.getElementById("ship-indicator");
+  indicatorDiv.innerHTML = ` 
+    <p><strong> Total Ships: </strong> ${totalShips} <span class="blinking-dot"></span> </p> 
+    <p><strong> Time: </strong> ${moment(latestShipUpdate.time).tz("Europe/Berlin").format("YYYY-MM-DD HH:mm:ss")} </p> 
+    <p><strong> Updated: </strong> ${latestShipUpdate.name} </p>
+    <p><strong> Added: </strong> ${latestShip.name} </p>
+  `;
+}
+
 updateMap();
+setInterval(updateShipIndicator, 1000); // update every second
 layersSetup();
