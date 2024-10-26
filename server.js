@@ -12,7 +12,6 @@ const chokepoints = require("./chokepoints.json");
 const chokepointsSecondary = require("./chokepointsSecondary.json");
 
 const WebSocket = require("ws");
-const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 
 mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
 
@@ -67,39 +66,51 @@ async function updateShipData(mmsi, time, message) {
   }
 }
 
-socket.addEventListener("open", () => {
-  const subscriptionMessage = {
-    Apikey: config.aisKey,
-    BoundingBoxes: [
-      [
-        [-90, -180],
-        [90, 180],
+function connectWebSocket() {
+  // function needed to reconnect after 5 minute socket timeout
+  const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
+
+  socket.addEventListener("open", () => {
+    console.log("connected to aisstream socket!");
+
+    const subscriptionMessage = {
+      Apikey: config.aisKey,
+      BoundingBoxes: [
+        [
+          [-90, -180],
+          [90, 180],
+        ],
       ],
-    ],
-  };
-  socket.send(JSON.stringify(subscriptionMessage));
-});
+    };
+    socket.send(JSON.stringify(subscriptionMessage));
+  });
 
-socket.addEventListener("message", (event) => {
-  const message = JSON.parse(event.data);
+  socket.addEventListener("message", (event) => {
+    const message = JSON.parse(event.data);
 
-  switch (message.MessageType) {
-    case "PositionReport":
-      updatePosition(
-        message.MetaData.MMSI,
-        message.MetaData.time_utc,
-        message.Message.PositionReport,
-      );
-      break;
-    case "ShipStaticData":
-      updateShipData(
-        message.MetaData.MMSI,
-        message.MetaData.time_utc,
-        message.Message.ShipStaticData,
-      );
-      break;
-  }
-});
+    switch (message.MessageType) {
+      case "PositionReport":
+        updatePosition(
+          message.MetaData.MMSI,
+          message.MetaData.time_utc,
+          message.Message.PositionReport,
+        );
+        break;
+      case "ShipStaticData":
+        updateShipData(
+          message.MetaData.MMSI,
+          message.MetaData.time_utc,
+          message.Message.ShipStaticData,
+        );
+        break;
+    }
+  });
+
+  socket.addEventListener("close", () => {
+    console.log("socket closed, reconnecting...");
+    setTimeout(connectWebSocket, 1000); // reconnect after 1 second
+  });
+}
 
 app.get("/ships", async (req, res) => {
   const ships = await Ship.find();
@@ -118,4 +129,5 @@ app.get("/chokepointsSecondary", (req, res) => {
   res.json(chokepointsSecondary);
 });
 
-app.listen(5000);
+app.listen(5000); // port 5000
+connectWebSocket();
