@@ -222,7 +222,7 @@ body,
   opacity: 1; /* hide the dropdown */
 
   transition: opacity 0.4s ease-in-out;
-  height: 625px;
+  height: 700px;
   overflow: scroll;
   overflow-x: hidden;
   pointer-events: auto; /* allow mouse click events inside the dropdown */
@@ -410,4 +410,30 @@ body,
   50% {
     opacity: 0; /* Invisible */
   }
+}
+
+.github-link {
+  position: absolute;
+  top: 665px;
+  width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: #ffffff96;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #89898995;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.github-link:hover {
+  color: rgb(255, 226, 82);
+}
+
+.github-icon {
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
 }
