@@ -40,6 +40,7 @@ function convertGeoToScreen([longitude, latitude]) {
 const deckOverlay = new MapboxOverlay({
   interleaved: true,
   layers: [],
+  getCursor: () => "default", // set cursor style to default instead of hand
 });
 
 let showports = true;
@@ -287,13 +288,23 @@ async function layersSetup() {
   }
 
   portsUl.querySelectorAll("li").forEach(function (li) {
-    li.addEventListener("mouseenter", function () {
-      for (const port of ports) {
+    for (const port of ports) {
+      li.addEventListener("mouseenter", function () {
         if (li.innerHTML.replace(/<\/?label>/g, "") == port.properties.name) {
           updatePortTooltip({ object: port });
         }
-      }
-    });
+      });
+
+      li.addEventListener("click", function () {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == port.properties.name) {
+          map.flyTo({
+            center: port.geometry.coordinates,
+            zoom: 11,
+            speed: 1,
+          });
+        }
+      });
+    }
   });
 
   shipsUl.querySelectorAll("li").forEach(function (li) {
@@ -301,6 +312,18 @@ async function layersSetup() {
       for (const ship of ships) {
         if (li.innerHTML.replace(/<\/?label>/g, "") == ship.name) {
           updateShipTooltip({ object: ship });
+        }
+      }
+    });
+
+    li.addEventListener("click", function () {
+      for (const ship of ships) {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == ship.name) {
+          map.flyTo({
+            center: [ship.longitude, ship.latitude],
+            zoom: 15,
+            speed: 1,
+          });
         }
       }
     });
@@ -318,7 +341,6 @@ async function updateShipIndicator() {
     return currentTime > latestTime ? current : latest;
   }, ships[0]);
   const latestShip = ships[ships.length - 1];
-  console.log(latestShip);
 
   const indicatorDiv = document.getElementById("ship-indicator");
   indicatorDiv.innerHTML = ` 
