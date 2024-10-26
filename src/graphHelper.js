@@ -23,7 +23,7 @@ export default class GraphHelper {
         sourceVertex.position[0],
         sourceVertex.position[1],
         destinationVertex.position[0],
-        sourceVertex.position[1],
+        destinationVertex.position[1],
       ],
     });
   }
