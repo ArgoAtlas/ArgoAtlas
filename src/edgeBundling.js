@@ -1,78 +1,53 @@
-import Graph from "./graph.js";
-import mongoose from "mongoose";
-import config from "../config.json" with { type: "json" };
-import Path from "../models/path.js";
+export default class EdgeBundling {
+  static hav(x) {
+    return Math.pow(Math.sin(x / 2), 2);
+  }
 
-mongoose.connect(config.dbURI).then(() => console.log("connected!"));
+  static archav(x) {
+    return 2 * Math.asin(Math.sqrt(x));
+  }
 
-async function createGraph() {
-  const paths = await Path.find({});
-  const g = new Graph();
+  static ink(coords) {
+    // coords: [x1, y1, x2, y2]
+    const x1Rad = (coords[0] * Math.PI) / 180;
+    const y1Rad = (coords[1] * Math.PI) / 180;
+    const x2Rad = (coords[2] * Math.PI) / 180;
+    const y2Rad = (coords[3] * Math.PI) / 180;
 
-  let counter = 0;
-  let countAlways = 0;
+    const xAbs = Math.abs(x1Rad - x2Rad);
+    const yAbs = Math.abs(y1Rad - y2Rad);
 
-  paths.forEach((path) => {
-    path.points.forEach((point) => {
-      console.log(countAlways, counter);
-      const longitude = Math.floor(point[0] * 10000) / 10000;
-      const latitude = Math.floor(point[1] * 10000) / 10000;
+    const havLat = this.hav(yAbs);
+    const havLong = this.hav(xAbs);
+    const havY = this.hav(y1Rad + y2Rad);
 
-      let overwriteID = -1;
+    const centralAngle = this.archav(havLat + (1 - havLat - havY) * havLong);
+    const earthRadius = 63781000;
 
-      Object.entries(g.valueList).forEach(([id, position]) => {
-        if (
-          Math.abs(longitude - position[0]) < 0.005 &&
-          Math.abs(latitude - position[1]) < 0.005
-        ) {
-          overwriteID = id;
-          return;
-        }
-      });
+    // arc length on earth
+    return centralAngle * earthRadius;
+  }
 
-      if (overwriteID >= 0) {
-        const oldPos = g.valueList[overwriteID];
+  static computeCentroids(nodes) {
+    let startCentroid = [0, 0];
+    let endCentroid = [0, 0];
 
-        g.valueList[overwriteID] = [
-          (oldPos[0] + longitude) / 2,
-          (oldPos[1] + latitude) / 2,
-        ];
-      } else {
-        g.addVertex(counter, [longitude, latitude]);
-        counter++;
-      }
-      countAlways++;
-    });
-  });
+    for (const node of nodes) {
+      startCentroid[0] += node[0];
+      startCentroid[1] += node[1];
+      endCentroid[0] += node[2];
+      endCentroid[1] += node[3];
+    }
 
-  // Object.entries(g.valueList).forEach(([id, position]) => {
-  //   if (g.adjacencyList[id]) {
-  //     console.log("id:", id);
-  //     for (let i = id + 1; i < Object.entries(g.valueList).length; i++) {
-  //       console.log("i:", i);
-  //       if (g.valueList[i]) {
-  //         const vertLong = g.valueList[i][0];
-  //         const vertLat = g.valueList[i][1];
+    startCentroid[0] /= nodes.length;
+    startCentroid[1] /= nodes.length;
+    endCentroid[0] /= nodes.length;
+    endCentroid[1] /= nodes.length;
 
-  //         if (
-  //           position[0] - vertLong <= 0.5 &&
-  //           position[0] - vertLong >= -0.5 &&
-  //           position[1] - vertLat <= 0.5 &&
-  //           position[1] - vertLat >= -0.5
-  //         ) {
-  //           g.removeVertex(i);
-  //           g.valueList[id] = [
-  //             (position[0] + vertLong) / 2,
-  //             (position[1] + vertLat) / 2,
-  //           ];
-  //         }
-  //       }
-  //     }
-  //   }
-  // });
+    console.log(startCentroid, endCentroid);
 
-  return g;
+    return [startCentroid, endCentroid];
+  }
+
+  static goldenSectionSearch(nodes, centroids) {}
 }
-
-const graph = await createGraph();
-console.log(graph.valueList);

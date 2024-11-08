@@ -1,5 +1,6 @@
 import Graph from "../models/graph.js";
 import ProximityGraph from "../models/proximityGraph.js";
+import EdgeBundling from "./edgeBundling.js";
 
 export default class GraphHelper {
   static async addVertex(position) {
@@ -57,4 +58,6 @@ export default class GraphHelper {
 
     await Graph.findByIdAndDelete(id);
   }
+
+  static async bundle() {}
 }
