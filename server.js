@@ -9,6 +9,7 @@ import ProximityGraph from "./models/proximityGraph.js";
 import GraphHelper from "./src/graphHelper.js";
 import ports from "./ports.json" with { type: "json" };
 import WebSocket from "ws";
+import { k } from "./src/edgeBundling.js";
 
 const app = express();
 app.use(cors());
@@ -18,9 +19,6 @@ const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
 const decisionInterval = 1;
 const referenceValue = decisionInterval / 2;
 const maximumEntries = 5;
-
-// amount of neighbors used when creating k-nearest neighbors graph
-const k = 3;
 
 mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
 
@@ -224,8 +222,10 @@ async function updatePath(mmsi, message) {
     }).limit(k);
 
     connectionPoints.forEach((point) => {
-      if (newVertex.id !== point.id)
+      if (newVertex.id !== point.id) {
         GraphHelper.addEdge(newVertex.id, point.id);
+        GraphHelper.addEdge(point.id, newVertex.id);
+      }
     });
 
     data.latitude.controlPositive = 0;

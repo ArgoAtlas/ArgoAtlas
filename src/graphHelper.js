@@ -19,7 +19,7 @@ export default class GraphHelper {
     sourceVertex.save();
     destinationVertex.save();
 
-    await ProximityGraph.create({
+    const newVertex = new ProximityGraph({
       coords: [
         sourceVertex.position[0],
         sourceVertex.position[1],
@@ -27,6 +27,16 @@ export default class GraphHelper {
         destinationVertex.position[1],
       ],
     });
+
+    const connectionPoints = await EdgeBundling.findConnectionPoints(newVertex);
+    connectionPoints.forEach(async (point) => {
+      newVertex.neighbors.push(point._id);
+      const editPoint = await ProximityGraph.findById(point._id);
+      editPoint.neighbors.push(newVertex.id);
+      editPoint.save();
+    });
+
+    newVertex.save();
   }
 
   static async removeEdge(sourceId, destinationId) {
@@ -59,5 +69,8 @@ export default class GraphHelper {
     await Graph.findByIdAndDelete(id);
   }
 
-  static async bundle() {}
+  static async bundleProximityEdges(source) {
+    const startEdge = await ProximityGraph.findById(sourceId);
+    const destinationEdge = await ProximityGraph.findById(destinationId);
+  }
 }

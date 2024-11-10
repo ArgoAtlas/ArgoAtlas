@@ -1,3 +1,7 @@
+import ProximityGraph from "../models/proximityGraph.js";
+
+export const k = 3;
+
 export default class EdgeBundling {
   static hav(x) {
     return Math.pow(Math.sin(x / 2), 2);
@@ -5,6 +9,50 @@ export default class EdgeBundling {
 
   static archav(x) {
     return 2 * Math.asin(Math.sqrt(x));
+  }
+
+  static async findConnectionPoints(vertex) {
+    // do knn search
+    const points = await ProximityGraph.aggregate([
+      {
+        $addFields: {
+          distance: {
+            $let: {
+              vars: {
+                pow: {
+                  $reduce: {
+                    input: { $zip: { inputs: [vertex.coords, "$coords"] } },
+                    initialValue: 0,
+                    in: {
+                      $add: [
+                        "$$value",
+                        {
+                          $pow: [
+                            {
+                              $subtract: [
+                                { $arrayElemAt: ["$$this", 0] },
+                                { $arrayElemAt: ["$$this", 1] },
+                              ],
+                            },
+                            2,
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+              in: { $sqrt: "$$pow" },
+            },
+          },
+        },
+      },
+      {
+        $sort: { distance: 1 },
+      },
+    ]).limit(k);
+
+    return points;
   }
 
   static ink(coords) {
