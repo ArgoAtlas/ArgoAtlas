@@ -1,4 +1,6 @@
 import ProximityGraph from "../models/proximityGraph.js";
+import Graph from "../models/graph.js";
+import GraphHelper from "./graphHelper.js";
 
 export const k = 3;
 const invphi = (Math.sqrt(5) - 1) / 2;
@@ -242,6 +244,36 @@ export default class EdgeBundling {
     return (b + a) / 2;
   }
 
+  static async generateRenderGraph() {
+    console.log("creating render graph...");
+    await Graph.deleteMany({});
+
+    const nodes = await ProximityGraph.find({});
+
+    for (const node of nodes) {
+      if (node.m1.length > 0 && node.m2.length > 0) {
+        const m1Point = new Graph({ position: node.m1 });
+        const m2Point = new Graph({ position: node.m2 });
+        await GraphHelper.addEdge(m1Point.id, m2Point.id);
+
+        for (const coord of node.coords) {
+          const inVertex = new Graph({ position: [coord[0], coord[1]] });
+          const outVertex = new Graph({ position: [coord[2], coord[3]] });
+
+          await GraphHelper.addEdge(inVertex.id, m1Point.id);
+          await GraphHelper.addEdge(m2Point.id, outVertex.id);
+        }
+      } else {
+        for (const coord of node.coords) {
+          const inVertex = new Graph({ position: [coord[0], coord[1]] });
+          const outVertex = new Graph({ position: [coord[2], coord[3]] });
+          await GraphHelper.addEdge(inVertex.id, outVertex.id);
+        }
+      }
+    }
+    console.log("done!");
+  }
+
   static computeBundleValues(firstNode, secondNode) {
     const combinedEdge = this.getCombinedEdge(firstNode, secondNode);
 
@@ -327,6 +359,8 @@ export default class EdgeBundling {
       await this.coalesceNodes(n);
       totalGain += gain;
     } while (gain > 0);
+
+    await this.generateRenderGraph();
 
     return totalGain;
   }
