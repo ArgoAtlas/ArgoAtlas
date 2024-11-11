@@ -106,6 +106,23 @@ export default class EdgeBundling {
     return total;
   }
 
+  // to be minimized
+  static totalInkNeeded(nodes, m1, m2) {
+    // nodes: [[x1, y1, x2, y2], ...]
+    // M1: [x, y]
+    // M2: [x, y]
+    let total = 0;
+
+    for (const node of nodes.coords) {
+      total += this.ink([[node[0], node[1], m1[0], m1[1]]]);
+      total += this.ink([[node[2], node[3], m2[0], m2[1]]]);
+    }
+
+    total += this.ink([[m1[0], m1[1], m2[0], m2[1]]]);
+
+    return total;
+  }
+
   static computeCentroids(node) {
     let startCentroid = [0, 0];
     let endCentroid = [0, 0];
