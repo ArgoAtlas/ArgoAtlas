@@ -1,6 +1,7 @@
 import ProximityGraph from "../models/proximityGraph.js";
 
 export const k = 3;
+const invphi = (Math.sqrt(5) - 1) / 2;
 
 export default class EdgeBundling {
   static async findConnectionPoints(vertex) {
@@ -156,7 +157,40 @@ export default class EdgeBundling {
     return [startCentroid, endCentroid];
   }
 
-  static goldenSectionSearch(nodes, centroids) {}
+  static lerp(a, b, delta) {
+    return [
+      (1 - delta) * a[0] + delta * b[0],
+      (1 - delta) * a[1] + delta * b[1],
+    ];
+  }
+
+  static costFunction(nodes, centroids, x) {
+    const startCentroid = centroids[0];
+    const endCentroid = centroids[1];
+
+    const m1 = this.lerp(startCentroid, endCentroid, x / 2);
+    const m2 = this.lerp(startCentroid, endCentroid, 1 - x / 2);
+
+    return this.totalInkNeeded(nodes, m1, m2);
+  }
+
+  static goldenSectionSearch(nodes, centroids, a, b, tolerance = 0.00001) {
+    while (b - a > tolerance) {
+      const c = b - (b - a) * invphi;
+      const d = a + (b - a) * invphi;
+
+      if (
+        this.costFunction(nodes, centroids, c) <
+        this.costFunction(nodes, centroids, d)
+      ) {
+        b = d;
+      } else {
+        a = c;
+      }
+    }
+
+    return (b + a) / 2;
+  }
 
   static async bundleEdges(firstNode, secondNode) {
     const bundleValues = this.computeBundleValues(firstNode, secondNode);
