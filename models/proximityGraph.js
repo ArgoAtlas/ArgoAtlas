@@ -9,6 +9,4 @@ const proximityGraphSchema = new mongoose.Schema({
   group: Number,
 });
 
-proximityGraphSchema.index({ position: "2dsphere" });
-
 export default mongoose.model("ProximityGraph", proximityGraphSchema);
