@@ -329,27 +329,27 @@ socket.addEventListener("message", (event) => {
 });
 
 app.get("/ships", async (req, res) => {
-  const ships = await Ship.find();
-  res.json(ships);
+  const ships = await Ship.find().lean();
+  res.send(ships);
 });
 
 app.get("/paths", async (req, res) => {
-  const paths = await Path.find();
-  res.json(paths);
+  const paths = await Path.find().lean();
+  res.send(paths);
 });
 
 app.get("/graph", async (req, res) => {
-  const graph = await Graph.find();
-  res.json(graph);
+  const graph = await Graph.find().lean();
+  res.send(graph);
 });
 
 app.get("/proximityGraph", async (req, res) => {
-  const proximityGraph = await ProximityGraph.find();
-  res.json(proximityGraph);
+  const proximityGraph = await ProximityGraph.find().lean();
+  res.send(proximityGraph);
 });
 
 app.get("/ports", (req, res) => {
-  res.json(ports);
+  res.send(ports);
 });
 
 app.listen(5000);
