@@ -12,47 +12,71 @@ export default class EdgeBundling {
   }
 
   static async findConnectionPoints(vertex) {
-    // do knn search
-    const points = await ProximityGraph.aggregate([
-      {
-        $addFields: {
-          distance: {
-            $let: {
-              vars: {
-                pow: {
-                  $reduce: {
-                    input: { $zip: { inputs: [vertex.coords, "$coords"] } },
-                    initialValue: 0,
-                    in: {
-                      $add: [
-                        "$$value",
-                        {
-                          $pow: [
-                            {
-                              $subtract: [
-                                { $arrayElemAt: ["$$this", 0] },
-                                { $arrayElemAt: ["$$this", 1] },
-                              ],
-                            },
-                            2,
-                          ],
-                        },
-                      ],
+    let points = [];
+    // approx. 100 m
+    const maximumDistance = 0.0009;
+    // const maximumDistance = 0.01;
+    // console.log(vertex);
+
+    for (const coord of vertex.coords) {
+      const result = await ProximityGraph.aggregate([
+        {
+          $unwind: {
+            path: "$coords",
+          },
+        },
+        {
+          $addFields: {
+            distance: {
+              $let: {
+                vars: {
+                  pow: {
+                    $reduce: {
+                      input: { $zip: { inputs: [coord, "$coords"] } },
+                      initialValue: 0,
+                      in: {
+                        $add: [
+                          "$$value",
+                          {
+                            $pow: [
+                              {
+                                $subtract: [
+                                  { $arrayElemAt: ["$$this", 0] },
+                                  { $arrayElemAt: ["$$this", 1] },
+                                ],
+                              },
+                              2,
+                            ],
+                          },
+                        ],
+                      },
                     },
                   },
                 },
+                in: { $sqrt: "$$pow" },
               },
-              in: { $sqrt: "$$pow" },
             },
           },
         },
-      },
-      {
-        $sort: { distance: 1 },
-      },
-    ]).limit(k);
+        {
+          $match: {
+            _id: { $ne: vertex.id },
+          },
+        },
+        {
+          $match: {
+            distance: { $lte: maximumDistance },
+          },
+        },
+        {
+          $sort: { distance: 1 },
+        },
+      ]).limit(k);
 
-    return points;
+      points.push(result);
+    }
+
+    return points.flat();
   }
 
   static ink(coords) {
