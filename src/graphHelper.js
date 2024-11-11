@@ -30,6 +30,8 @@ export default class GraphHelper {
 
     const connectionPoints = await EdgeBundling.findConnectionPoints(newVertex);
     connectionPoints.forEach(async (point) => {
+      if (newVertex.id === point._id) return;
+
       newVertex.neighbors.push(point._id);
       const editPoint = await ProximityGraph.findById(point._id);
       editPoint.neighbors.push(newVertex.id);
