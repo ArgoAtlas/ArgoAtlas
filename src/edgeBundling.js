@@ -128,4 +128,16 @@ export default class EdgeBundling {
   }
 
   static goldenSectionSearch(nodes, centroids) {}
+
+  static async bundleEdges(firstNode, secondNode) {
+    const bundleValues = this.computeBundleValues(firstNode, secondNode);
+
+    firstNode.m1 = bundleValues[0];
+    firstNode.m2 = bundleValues[1];
+    secondNode.m1 = bundleValues[0];
+    secondNode.m2 = bundleValues[1];
+
+    await firstNode.save();
+    await secondNode.save();
+  }
 }
