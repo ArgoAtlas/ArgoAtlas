@@ -108,6 +108,8 @@ export default class EdgeBundling {
   }
 
   static getCombinedEdge(firstNode, secondNode) {
+    if (firstNode === null || secondNode === 0) return;
+
     const combinedEdge = new ProximityGraph({
       coords: firstNode.coords.concat(secondNode.coords),
       neighbors: firstNode.neighbors.concat(secondNode.neighbors),
@@ -125,6 +127,14 @@ export default class EdgeBundling {
 
     for (const neighborID of node.neighbors) {
       const neighbor = await ProximityGraph.findById(neighborID);
+
+      if (neighbor === null) {
+        await ProximityGraph.updateOne(
+          { _id: node.id },
+          { neighbors: node.neighbors.filter((n) => n !== neighborID) },
+        );
+        continue;
+      }
 
       const combined = this.getCombinedEdge(node, neighbor);
       const bundleValues = this.computeBundleValues(node, neighbor);
