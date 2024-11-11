@@ -142,6 +142,10 @@ export default class EdgeBundling {
     return bestNeighbor;
   }
 
+  static coalesceNodes() {
+    // console.log("coalescing...");
+  }
+
   // to be minimized
   static totalInkNeeded(nodes, m1, m2) {
     // nodes: [[x1, y1, x2, y2], ...]
@@ -249,5 +253,58 @@ export default class EdgeBundling {
 
     await firstNode.save();
     await secondNode.save();
+  }
+
+  static async performEdgeBundling() {
+    let totalGain = 0;
+    let gain = 0;
+    const ungrouped = -1;
+
+    do {
+      gain = 0;
+      let n = 0;
+      await ProximityGraph.updateMany({}, { group: -1 });
+      const nodes = await ProximityGraph.find({});
+      console.log(nodes.length);
+
+      for (const node of nodes) {
+        if (node.group === ungrouped) {
+          const neighbor = await this.getInkSavingNeighbor(node);
+          console.log(neighbor);
+
+          if (neighbor === null) return; // no neighbor found that saves ink
+
+          const combined = this.getCombinedEdge(node, neighbor);
+          const bundleValues = this.computeBundleValues(node, neighbor);
+
+          const inkGain =
+            this.ink(node.coords) +
+            this.ink(neighbor.coords) -
+            this.costFunction(combined, combined.centroids, bundleValues[2]);
+
+          if (inkGain > 0) {
+            await this.bundleEdges(node, neighbor);
+            gain += inkGain;
+            if (node.group !== ungrouped) {
+              neighbor.group = node.group;
+            } else {
+              node.group = n;
+              neighbor.group = n;
+            }
+          } else {
+            neighbor.group = n;
+          }
+
+          n += 1;
+          node.save();
+          neighbor.save();
+        }
+      }
+
+      this.coalesceNodes();
+      totalGain += gain;
+    } while (gain > 0);
+
+    return totalGain;
   }
 }
