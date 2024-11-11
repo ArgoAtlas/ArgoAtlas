@@ -7,6 +7,7 @@ import Path from "./models/path.js";
 import Graph from "./models/graph.js";
 import ProximityGraph from "./models/proximityGraph.js";
 import GraphHelper from "./src/graphHelper.js";
+import EdgeBundling from "./src/edgeBundling.js";
 import ports from "./ports.json" with { type: "json" };
 import WebSocket from "ws";
 import { k } from "./src/edgeBundling.js";
@@ -292,6 +293,12 @@ async function updateShipData(mmsi, message) {
   }
 }
 
+async function bundling() {
+  await EdgeBundling.performEdgeBundling();
+
+  setTimeout(bundling, 10000);
+}
+
 socket.addEventListener("open", () => {
   const subscriptionMessage = {
     Apikey: config.aisKey,
@@ -346,3 +353,4 @@ app.get("/ports", (req, res) => {
 });
 
 app.listen(5000);
+bundling();
