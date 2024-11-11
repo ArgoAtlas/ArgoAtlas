@@ -204,12 +204,7 @@ async function updatePath(mmsi, message) {
   ) {
     data.points.push([message.Longitude, message.Latitude]);
 
-    const newVertex = new Graph({
-      position: [message.Longitude, message.Latitude],
-    });
-    newVertex.save();
-
-    const connectionPoints = await Graph.find({
+    const nearbyPoints = await Graph.find({
       position: {
         $near: {
           $geometry: {
@@ -219,12 +214,31 @@ async function updatePath(mmsi, message) {
           $maxDistance: 100,
         },
       },
-    }).limit(k);
+    });
 
-    for (const point of connectionPoints) {
-      if (newVertex.id !== point.id) {
-        await GraphHelper.addEdge(newVertex.id, point.id);
-        await GraphHelper.addEdge(point.id, newVertex.id);
+    if (nearbyPoints.length <= 0) {
+      const newVertex = new Graph({
+        position: [message.Longitude, message.Latitude],
+      });
+      newVertex.save();
+
+      const connectionPoints = await Graph.find({
+        position: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [message.Longitude, message.Latitude],
+            },
+            $maxDistance: 200,
+          },
+        },
+      }).limit(k);
+
+      for (const point of connectionPoints) {
+        if (newVertex.id !== point.id) {
+          await GraphHelper.addEdge(newVertex.id, point.id);
+          await GraphHelper.addEdge(point.id, newVertex.id);
+        }
       }
     }
 
