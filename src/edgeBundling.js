@@ -142,8 +142,21 @@ export default class EdgeBundling {
     return bestNeighbor;
   }
 
-  static coalesceNodes() {
-    // console.log("coalescing...");
+  static async coalesceNodes(groupCount) {
+    for (let i = 0; i <= groupCount; i++) {
+      const nodes = await ProximityGraph.find({ group: i });
+      let data = new ProximityGraph({ coords: [], m1: [], m2: [], group: i });
+
+      for (const node of nodes) {
+        node.coords.forEach((coord) => data.coords.push(coord));
+        data.m1 = node.m1;
+        data.m2 = node.m2;
+
+        await ProximityGraph.deleteOne({ _id: node.id });
+      }
+
+      await data.save();
+    }
   }
 
   // to be minimized
@@ -272,7 +285,7 @@ export default class EdgeBundling {
           const neighbor = await this.getInkSavingNeighbor(node);
           console.log(neighbor);
 
-          if (neighbor === null) return; // no neighbor found that saves ink
+          if (neighbor === null) continue; // no neighbor found that saves ink
 
           const combined = this.getCombinedEdge(node, neighbor);
           const bundleValues = this.computeBundleValues(node, neighbor);
@@ -301,7 +314,7 @@ export default class EdgeBundling {
         }
       }
 
-      this.coalesceNodes();
+      await this.coalesceNodes(n);
       totalGain += gain;
     } while (gain > 0);
 
