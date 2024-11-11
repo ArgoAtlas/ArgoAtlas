@@ -119,6 +119,29 @@ export default class EdgeBundling {
     return combinedEdge;
   }
 
+  static async getInkSavingNeighbor(node) {
+    let bestNeighbor = null;
+    let inkSaved = 0;
+
+    for (const neighborID of node.neighbors) {
+      const neighbor = await ProximityGraph.findById(neighborID);
+
+      const combined = this.getCombinedEdge(node, neighbor);
+      const bundleValues = this.computeBundleValues(node, neighbor);
+
+      const inkSavedCombined =
+        this.ink(node.coords) +
+        this.ink(neighbor.coords) -
+        this.costFunction(combined, combined.centroids, bundleValues[2]);
+
+      if (inkSavedCombined > inkSaved) {
+        inkSaved = inkSavedCombined;
+        bestNeighbor = neighbor;
+      }
+    }
+    return bestNeighbor;
+  }
+
   // to be minimized
   static totalInkNeeded(nodes, m1, m2) {
     // nodes: [[x1, y1, x2, y2], ...]
