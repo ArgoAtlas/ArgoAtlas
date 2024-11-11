@@ -192,6 +192,30 @@ export default class EdgeBundling {
     return (b + a) / 2;
   }
 
+  static computeBundleValues(firstNode, secondNode) {
+    const combinedEdge = this.getCombinedEdge(firstNode, secondNode);
+
+    const x = this.goldenSectionSearch(
+      combinedEdge,
+      combinedEdge.centroids,
+      0,
+      1,
+    );
+
+    const m1 = this.lerp(
+      combinedEdge.centroids[0],
+      combinedEdge.centroids[1],
+      x / 2,
+    );
+    const m2 = this.lerp(
+      combinedEdge.centroids[0],
+      combinedEdge.centroids[1],
+      1 - x / 2,
+    );
+
+    return [m1, m2, x];
+  }
+
   static async bundleEdges(firstNode, secondNode) {
     const bundleValues = this.computeBundleValues(firstNode, secondNode);
 
