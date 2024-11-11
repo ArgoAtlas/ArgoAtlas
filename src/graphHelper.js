@@ -70,9 +70,4 @@ export default class GraphHelper {
 
     await Graph.findByIdAndDelete(id);
   }
-
-  static async bundleProximityEdges(source) {
-    const startEdge = await ProximityGraph.findById(sourceId);
-    const destinationEdge = await ProximityGraph.findById(destinationId);
-  }
 }
