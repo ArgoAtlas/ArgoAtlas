@@ -3,14 +3,6 @@ import ProximityGraph from "../models/proximityGraph.js";
 export const k = 3;
 
 export default class EdgeBundling {
-  static hav(x) {
-    return Math.pow(Math.sin(x / 2), 2);
-  }
-
-  static archav(x) {
-    return 2 * Math.asin(Math.sqrt(x));
-  }
-
   static async findConnectionPoints(vertex) {
     let points = [];
     // approx. 100 m
@@ -79,25 +71,39 @@ export default class EdgeBundling {
     return points.flat();
   }
 
-  static ink(coords) {
-    // coords: [x1, y1, x2, y2]
-    const x1Rad = (coords[0] * Math.PI) / 180;
-    const y1Rad = (coords[1] * Math.PI) / 180;
-    const x2Rad = (coords[2] * Math.PI) / 180;
-    const y2Rad = (coords[3] * Math.PI) / 180;
+  static hav(x) {
+    return Math.pow(Math.sin(x / 2), 2);
+  }
 
-    const xAbs = Math.abs(x1Rad - x2Rad);
-    const yAbs = Math.abs(y1Rad - y2Rad);
+  static archav(x) {
+    return 2 * Math.asin(Math.sqrt(x));
+  }
 
-    const havLat = this.hav(yAbs);
-    const havLong = this.hav(xAbs);
-    const havY = this.hav(y1Rad + y2Rad);
+  static ink(node) {
+    let total = 0;
 
-    const centralAngle = this.archav(havLat + (1 - havLat - havY) * havLong);
-    const earthRadius = 63781000;
+    node.forEach((coord) => {
+      // coord: [x1, y1, x2, y2]
+      const x1Rad = (coord[0] * Math.PI) / 180;
+      const y1Rad = (coord[1] * Math.PI) / 180;
+      const x2Rad = (coord[2] * Math.PI) / 180;
+      const y2Rad = (coord[3] * Math.PI) / 180;
 
-    // arc length on earth
-    return centralAngle * earthRadius;
+      const xAbs = Math.abs(x1Rad - x2Rad);
+      const yAbs = Math.abs(y1Rad - y2Rad);
+
+      const havLat = this.hav(yAbs);
+      const havLong = this.hav(xAbs);
+      const havY = this.hav(y1Rad + y2Rad);
+
+      const centralAngle = this.archav(havLat + (1 - havLat - havY) * havLong);
+      const earthRadius = 63781000;
+
+      // arc length on earth
+      total += centralAngle * earthRadius;
+    });
+
+    return total;
   }
 
   static computeCentroids(node) {
