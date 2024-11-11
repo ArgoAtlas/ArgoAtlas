@@ -76,21 +76,21 @@ export default class EdgeBundling {
     return centralAngle * earthRadius;
   }
 
-  static computeCentroids(nodes) {
+  static computeCentroids(node) {
     let startCentroid = [0, 0];
     let endCentroid = [0, 0];
 
-    for (const node of nodes) {
-      startCentroid[0] += node[0];
-      startCentroid[1] += node[1];
-      endCentroid[0] += node[2];
-      endCentroid[1] += node[3];
+    for (const coord of node.coords) {
+      startCentroid[0] += coord[0];
+      startCentroid[1] += coord[1];
+      endCentroid[0] += coord[2];
+      endCentroid[1] += coord[3];
     }
 
-    startCentroid[0] /= nodes.length;
-    startCentroid[1] /= nodes.length;
-    endCentroid[0] /= nodes.length;
-    endCentroid[1] /= nodes.length;
+    startCentroid[0] /= node.coords.length;
+    startCentroid[1] /= node.coords.length;
+    endCentroid[0] /= node.coords.length;
+    endCentroid[1] /= node.coords.length;
 
     console.log(startCentroid, endCentroid);
 
