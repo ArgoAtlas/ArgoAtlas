@@ -221,12 +221,12 @@ async function updatePath(mmsi, message) {
       },
     }).limit(k);
 
-    connectionPoints.forEach((point) => {
+    for (const point of connectionPoints) {
       if (newVertex.id !== point.id) {
-        GraphHelper.addEdge(newVertex.id, point.id);
-        GraphHelper.addEdge(point.id, newVertex.id);
+        await GraphHelper.addEdge(newVertex.id, point.id);
+        await GraphHelper.addEdge(point.id, newVertex.id);
       }
-    });
+    }
 
     data.latitude.controlPositive = 0;
     data.latitude.controlNegative = 0;

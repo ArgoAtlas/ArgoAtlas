@@ -29,14 +29,15 @@ export default class GraphHelper {
     });
 
     const connectionPoints = await EdgeBundling.findConnectionPoints(newVertex);
-    connectionPoints.forEach(async (point) => {
-      if (newVertex.id === point._id) return;
+
+    for (const point of connectionPoints) {
+      if (newVertex.id === point._id) continue;
 
       newVertex.neighbors.push(point._id);
       const editPoint = await ProximityGraph.findById(point._id);
       editPoint.neighbors.push(newVertex.id);
       editPoint.save();
-    });
+    }
 
     newVertex.save();
   }
@@ -64,9 +65,8 @@ export default class GraphHelper {
 
     if (!vertex) return;
 
-    vertex.adjacentVertices.forEach((adjacentVertex) =>
-      this.removeEdge(id, adjacentVertex),
-    );
+    for (const adjacentVertex of vertex.adjacentVertices)
+      await this.removeEdge(id, adjacentVertex);
 
     await Graph.findByIdAndDelete(id);
   }
