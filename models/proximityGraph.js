@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const proximityGraphSchema = new mongoose.Schema({
-  coords: [Number, Number, Number, Number],
+  coords: [[Number]],
   neighbors: [String],
 });
 
