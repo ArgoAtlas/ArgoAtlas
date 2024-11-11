@@ -259,13 +259,13 @@ export default class EdgeBundling {
   static async bundleEdges(firstNode, secondNode) {
     const bundleValues = this.computeBundleValues(firstNode, secondNode);
 
-    firstNode.m1 = bundleValues[0];
-    firstNode.m2 = bundleValues[1];
-    secondNode.m1 = bundleValues[0];
-    secondNode.m2 = bundleValues[1];
+    const mValues = {
+      m1: bundleValues[0],
+      m2: bundleValues[1],
+    };
 
-    await firstNode.save();
-    await secondNode.save();
+    await ProximityGraph.findOneAndUpdate({ _id: firstNode.id }, mValues);
+    await ProximityGraph.findOneAndUpdate({ _id: secondNode.id }, mValues);
   }
 
   static async performEdgeBundling() {
