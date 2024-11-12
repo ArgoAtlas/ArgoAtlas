@@ -10,7 +10,7 @@ export default class EdgeBundling {
   static async findConnectionPoints(vertex) {
     let points = [];
     // approx. 100 m
-    const maximumDistance = 0.002;
+    const maximumDistance = 0.05;
     // const maximumDistance = 0.01;
     // console.log(vertex);
 

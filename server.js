@@ -213,7 +213,7 @@ async function updatePath(mmsi, message) {
             type: "Point",
             coordinates: [message.Longitude, message.Latitude],
           },
-          $maxDistance: 100,
+          $maxDistance: 450,
         },
       },
     });
@@ -231,7 +231,7 @@ async function updatePath(mmsi, message) {
               type: "Point",
               coordinates: [message.Longitude, message.Latitude],
             },
-            $maxDistance: 200,
+            $maxDistance: 500,
           },
         },
       }).limit(k);
