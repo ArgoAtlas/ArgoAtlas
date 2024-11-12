@@ -222,7 +222,7 @@ async function updatePath(mmsi, message) {
       const newVertex = new Graph({
         position: [message.Longitude, message.Latitude],
       });
-      newVertex.save();
+      await newVertex.save();
 
       const connectionPoints = await Graph.find({
         position: {
