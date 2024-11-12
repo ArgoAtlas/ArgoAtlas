@@ -202,7 +202,7 @@ async function updateMap() {
     ],
   });
 
-  setTimeout(updateMap, 5000);
+  setTimeout(updateMap, 1000);
 }
 
 map.addControl(deckOverlay);
