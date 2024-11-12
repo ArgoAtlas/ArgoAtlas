@@ -158,17 +158,22 @@ export default class EdgeBundling {
   static async coalesceNodes(groupCount) {
     for (let i = 0; i <= groupCount; i++) {
       const nodes = await ProximityGraph.find({ group: i });
-      let data = new ProximityGraph({ coords: [], m1: [], m2: [], group: i });
 
-      for (const node of nodes) {
-        node.coords.forEach((coord) => data.coords.push(coord));
-        data.m1 = node.m1;
-        data.m2 = node.m2;
+      if (nodes.length >= 1) {
+        let data = { coords: [], m1: [], m2: [], group: i };
 
-        await ProximityGraph.deleteOne({ _id: node.id });
+        for (const node of nodes) {
+          for (const coord of node.coords) {
+            data.coords.push(coord);
+          }
+          data.m1 = node.m1;
+          data.m2 = node.m2;
+
+          await ProximityGraph.deleteOne({ _id: node.id });
+        }
+
+        await ProximityGraph.create(data);
       }
-
-      await data.save();
     }
   }
 
