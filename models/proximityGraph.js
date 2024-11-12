@@ -6,7 +6,7 @@ const proximityGraphSchema = new mongoose.Schema({
   m1: [Number],
   m2: [Number],
   centroids: [[Number]],
-  group: Number,
+  group: { type: Number, index: true },
 });
 
 export default mongoose.model("ProximityGraph", proximityGraphSchema);
