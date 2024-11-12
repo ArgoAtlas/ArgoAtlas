@@ -254,7 +254,7 @@ export default class EdgeBundling {
     console.log("creating render graph...");
     await Graph.deleteMany({});
 
-    const nodes = await ProximityGraph.find({});
+    const nodes = await ProximityGraph.find({}).lean();
 
     for (const node of nodes) {
       if (node.m1.length > 0 && node.m2.length > 0) {
@@ -316,6 +316,39 @@ export default class EdgeBundling {
     await ProximityGraph.findOneAndUpdate({ _id: secondNode.id }, mValues);
   }
 
+  static async createProximityGraph() {
+    await ProximityGraph.deleteMany({});
+    const vertices = await Graph.find({}).lean();
+
+    for (const vertex of vertices) {
+      for (const adjacentID of vertex.adjacentVertices) {
+        const adjacentVertex = await Graph.findById(adjacentID);
+
+        if (adjacentVertex === null) continue;
+
+        const coords = [];
+        coords.push(vertex.position);
+        coords.push(adjacentVertex.position);
+
+        const newVertex = new ProximityGraph({
+          coords: [coords.flat()],
+          group: -1,
+        });
+
+        const neighbors = await this.findConnectionPoints(newVertex);
+        for (const neighbor of neighbors) {
+          if (newVertex.id === neighbor._id) continue;
+
+          newVertex.neighbors.push(neighbor._id);
+          const editPoint = await ProximityGraph.findById(neighbor._id);
+          editPoint.neighbors.push(newVertex.id);
+          await editPoint.save();
+        }
+        await newVertex.save();
+      }
+    }
+  }
+
   static async generateLineGraph() {
     await Bundle.deleteMany({});
     const nodes = await ProximityGraph.find({}).lean();
@@ -350,10 +383,11 @@ export default class EdgeBundling {
     let gain = 0;
     const ungrouped = -1;
 
+    await this.createProximityGraph();
+
     do {
       gain = 0;
       let n = 0;
-      await ProximityGraph.updateMany({}, { group: -1 });
       const nodes = await ProximityGraph.find({});
       console.log(nodes.length);
 
@@ -375,19 +409,20 @@ export default class EdgeBundling {
           if (inkGain > 0) {
             await this.bundleEdges(node, neighbor);
             gain += inkGain;
-            if (node.group !== ungrouped) {
-              neighbor.group = node.group;
+            if (neighbor.group !== ungrouped) {
+              node.group = neighbor.group;
             } else {
               node.group = n;
               neighbor.group = n;
             }
           } else {
-            neighbor.group = n;
+            node.group = n;
           }
 
           n += 1;
-          node.save();
-          neighbor.save();
+
+          await node.save();
+          await neighbor.save();
         }
       }
 
@@ -395,7 +430,7 @@ export default class EdgeBundling {
       totalGain += gain;
     } while (gain > 0);
 
-    await this.generateRenderGraph();
+    // await this.generateRenderGraph();
     await this.generateLineGraph();
 
     return totalGain;
