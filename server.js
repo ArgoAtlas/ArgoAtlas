@@ -239,7 +239,7 @@ async function updatePath(mmsi, message) {
       for (const point of connectionPoints) {
         if (newVertex.id !== point.id) {
           await GraphHelper.addEdge(newVertex.id, point.id);
-          await GraphHelper.addEdge(point.id, newVertex.id);
+          // await GraphHelper.addEdge(point.id, newVertex.id);
         }
       }
     }
