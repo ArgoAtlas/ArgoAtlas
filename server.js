@@ -5,6 +5,7 @@ import config from "./config.json" with { type: "json" };
 import Ship from "./models/ship.js";
 import Path from "./models/path.js";
 import Graph from "./models/graph.js";
+import Bundle from "./models/bundle.js";
 import ProximityGraph from "./models/proximityGraph.js";
 import GraphHelper from "./src/graphHelper.js";
 import EdgeBundling from "./src/edgeBundling.js";
@@ -341,6 +342,11 @@ app.get("/paths", async (req, res) => {
 app.get("/graph", async (req, res) => {
   const graph = await Graph.find().lean();
   res.send(graph);
+});
+
+app.get("/bundle", async (req, res) => {
+  const bundle = await Bundle.find().lean();
+  res.send(bundle);
 });
 
 app.get("/proximityGraph", async (req, res) => {

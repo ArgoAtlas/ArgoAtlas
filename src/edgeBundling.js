@@ -1,6 +1,7 @@
 import ProximityGraph from "../models/proximityGraph.js";
 import Graph from "../models/graph.js";
 import GraphHelper from "./graphHelper.js";
+import Bundle from "../models/bundle.js";
 
 export const k = 3;
 const invphi = (Math.sqrt(5) - 1) / 2;
@@ -310,6 +311,35 @@ export default class EdgeBundling {
     await ProximityGraph.findOneAndUpdate({ _id: secondNode.id }, mValues);
   }
 
+  static async generateLineGraph() {
+    await Bundle.deleteMany({});
+    const nodes = await ProximityGraph.find({}).lean();
+
+    for (const node of nodes) {
+      if (node.m1.length > 0 && node.m2.length > 0) {
+        await Bundle.create({ source: node.m1, target: node.m2 });
+
+        for (const coord of node.coords) {
+          await Bundle.create({
+            source: [coord[0], coord[1]],
+            target: node.m1,
+          });
+          await Bundle.create({
+            source: [coord[2], coord[3]],
+            target: node.m2,
+          });
+        }
+      } else {
+        for (const coord of node.coords) {
+          await Bundle.create({
+            source: [coord[0], coord[1]],
+            target: [coord[2], coord[3]],
+          });
+        }
+      }
+    }
+  }
+
   static async performEdgeBundling() {
     let totalGain = 0;
     let gain = 0;
@@ -361,6 +391,7 @@ export default class EdgeBundling {
     } while (gain > 0);
 
     await this.generateRenderGraph();
+    await this.generateLineGraph();
 
     return totalGain;
   }

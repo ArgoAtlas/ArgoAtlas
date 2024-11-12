@@ -129,15 +129,17 @@ function updateShipTooltip({ object, x, y }) {
 async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
-  const pathsResponse = await fetch(`${serverAddress}/paths`);
-  const graphResponse = await fetch(`${serverAddress}/graph`);
-  const proximityGraphResponse = await fetch(`${serverAddress}/proximityGraph`);
+  // const pathsResponse = await fetch(`${serverAddress}/paths`);
+  // const graphResponse = await fetch(`${serverAddress}/graph`);
+  const bundleResponse = await fetch(`${serverAddress}/bundle`);
+  // const proximityGraphResponse = await fetch(`${serverAddress}/proximityGraph`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
-  const paths = await pathsResponse.json();
-  const graph = await graphResponse.json();
-  const proximityGraph = await proximityGraphResponse.json();
+  // const paths = await pathsResponse.json();
+  // const graph = await graphResponse.json();
+  const bundle = await bundleResponse.json();
+  // const proximityGraph = await proximityGraphResponse.json();
 
   deckOverlay.setProps({
     layers: [
@@ -174,6 +176,14 @@ async function updateMap() {
       //   radiusMinPixels: 2,
       //   radiusMaxPixels: 3,
       // }),
+      new LineLayer({
+        id: "bundle",
+        data: bundle,
+        getColor: [255, 255, 255],
+        getSourcePosition: (d) => [d.source[0], d.source[1]],
+        getTargetPosition: (d) => [d.target[0], d.target[1]],
+        widthMinPixels: 1,
+      }),
       // new PathLayer({
       //   id: "paths",
       //   data: paths,
@@ -181,14 +191,14 @@ async function updateMap() {
       //   getPath: (d) => d.points,
       //   widthMinPixels: 1,
       // }),
-      new LineLayer({
-        id: "proximityGraph",
-        data: proximityGraph,
-        getColor: [0, 255, 255],
-        getSourcePosition: (d) => [d.coords[0], d.coords[1]],
-        getTargetPosition: (d) => [d.coords[2], d.coords[3]],
-        getWidth: 5,
-      }),
+      //   new LineLayer({
+      //     id: "proximityGraph",
+      //     data: proximityGraph,
+      //     getColor: [0, 255, 255],
+      //     getSourcePosition: (d) => [d.coords[0], d.coords[1]],
+      //     getTargetPosition: (d) => [d.coords[2], d.coords[3]],
+      //     getWidth: 5,
+      //   }),
     ],
   });
 
