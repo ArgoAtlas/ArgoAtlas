@@ -113,8 +113,8 @@ export default class EdgeBundling {
     if (firstNode === null || secondNode === 0) return;
 
     const combinedEdge = new ProximityGraph({
-      coords: firstNode.coords.concat(secondNode.coords),
-      neighbors: firstNode.neighbors.concat(secondNode.neighbors),
+      coords: [...new Set(firstNode.coords.concat(secondNode.coords))],
+      neighbors: [...new Set(firstNode.neighbors.concat(secondNode.neighbors))],
     });
 
     const centroids = this.computeCentroids(combinedEdge);
