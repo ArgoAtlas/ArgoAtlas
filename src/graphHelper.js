@@ -13,33 +13,41 @@ export default class GraphHelper {
 
     if (!sourceVertex || !destinationVertex) return;
 
-    sourceVertex.adjacentVertices.push(destinationId);
-    destinationVertex.adjacentVertices.push(sourceId);
+    let newSource = {
+      adjacentVertices: sourceVertex.adjacentVertices,
+    };
 
-    sourceVertex.save();
-    destinationVertex.save();
+    let newDestination = {
+      adjacentVertices: destinationVertex.adjacentVertices,
+    };
 
-    const newVertex = new ProximityGraph({
-      coords: [
-        sourceVertex.position[0],
-        sourceVertex.position[1],
-        destinationVertex.position[0],
-        destinationVertex.position[1],
-      ],
-    });
+    newSource.adjacentVertices.push(destinationId);
+    newDestination.adjacentVertices.push(sourceId);
 
-    const connectionPoints = await EdgeBundling.findConnectionPoints(newVertex);
+    await Graph.updateOne({ _id: sourceId }, newSource);
+    await Graph.updateOne({ _id: destinationId }, newDestination);
 
-    for (const point of connectionPoints) {
-      if (newVertex.id === point._id) continue;
+    // const newVertex = new ProximityGraph({
+    //   coords: [
+    //     sourceVertex.position[0],
+    //     sourceVertex.position[1],
+    //     destinationVertex.position[0],
+    //     destinationVertex.position[1],
+    //   ],
+    // });
 
-      newVertex.neighbors.push(point._id);
-      const editPoint = await ProximityGraph.findById(point._id);
-      editPoint.neighbors.push(newVertex.id);
-      editPoint.save();
-    }
+    // const connectionPoints = await EdgeBundling.findConnectionPoints(newVertex);
 
-    newVertex.save();
+    // for (const point of connectionPoints) {
+    //   if (newVertex.id === point._id) continue;
+
+    //   newVertex.neighbors.push(point._id);
+    //   const editPoint = await ProximityGraph.findById(point._id);
+    //   editPoint.neighbors.push(newVertex.id);
+    //   editPoint.save();
+    // }
+
+    // newVertex.save();
   }
 
   static async removeEdge(sourceId, destinationId) {
