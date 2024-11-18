@@ -186,7 +186,7 @@ export default class EdgeBundling {
 
     for (const node of nodes.coords) {
       total += this.ink([[node[0], node[1], m1[0], m1[1]]]);
-      total += this.ink([[node[2], node[3], m2[0], m2[1]]]);
+      total += this.ink([[m2[0], m2[1], node[2], node[3]]]);
     }
 
     total += this.ink([[m1[0], m1[1], m2[0], m2[1]]]);
