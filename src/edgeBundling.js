@@ -388,7 +388,7 @@ export default class EdgeBundling {
     do {
       gain = 0;
       let n = 0;
-      await ProximityGraph.updateMany({}, { group: -1 });
+      await ProximityGraph.updateMany({}, { group: ungrouped });
       const nodes = await ProximityGraph.find({});
       console.log(nodes.length);
 
