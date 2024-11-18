@@ -111,7 +111,7 @@ export default class EdgeBundling {
   }
 
   static getCombinedEdge(firstNode, secondNode) {
-    if (firstNode === null || secondNode === 0) return;
+    if (firstNode === null || secondNode === null) return;
 
     const combinedEdge = new ProximityGraph({
       coords: [...new Set(firstNode.coords.concat(secondNode.coords))],
