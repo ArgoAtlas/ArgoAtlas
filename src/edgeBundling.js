@@ -272,9 +272,9 @@ export default class EdgeBundling {
     console.log("creating render graph...");
     await Graph.deleteMany({});
 
-    const nodes = await ProximityGraph.find({}).lean();
+    const nodes = ProximityGraph.find({}).lean().cursor();
 
-    for (const node of nodes) {
+    for await (const node of nodes) {
       if (node.m1.length > 0 && node.m2.length > 0) {
         const m1Point = new Graph({ position: node.m1 });
         const m2Point = new Graph({ position: node.m2 });
