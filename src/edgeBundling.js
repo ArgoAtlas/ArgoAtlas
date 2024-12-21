@@ -5,6 +5,8 @@ import Bundle from "../models/bundle.js";
 
 export const k = 3;
 const invphi = (Math.sqrt(5) - 1) / 2;
+const maxAngle = 40 * (Math.PI / 180);
+const angleStrength = 1.2;
 
 export default class EdgeBundling {
   static async findConnectionPoints(vertex) {
@@ -229,7 +231,10 @@ export default class EdgeBundling {
     const m1 = this.lerp(startCentroid, endCentroid, x / 2);
     const m2 = this.lerp(startCentroid, endCentroid, 1 - x / 2);
 
-    return this.totalInkNeeded(nodes, m1, m2);
+    return (
+      this.totalInkNeeded(nodes, m1, m2) *
+      (1 / (Math.cos(maxAngle) / angleStrength))
+    );
   }
 
   static goldenSectionSearch(nodes, centroids, a, b, tolerance = 0.00001) {
