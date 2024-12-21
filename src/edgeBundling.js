@@ -336,42 +336,74 @@ export default class EdgeBundling {
 
   static async createProximityGraph() {
     await ProximityGraph.deleteMany({});
-    const vertices = await Graph.find({}).lean();
+    const vertices = Graph.find({}).lean().cursor();
 
-    for (const vertex of vertices) {
-      for (const adjacentID of vertex.adjacentVertices) {
-        const adjacentVertex = await Graph.findById(adjacentID);
+    for await (const vertex of vertices) {
+      const connectionPoints = await Graph.find({
+        position: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [vertex.position[0], vertex.position[1]],
+            },
+          },
+        },
+      }).limit(k);
 
-        if (adjacentVertex === null) continue;
-
-        const coords = [];
-        coords.push(vertex.position);
-        coords.push(adjacentVertex.position);
+      for (const point of connectionPoints) {
+        const coords = [
+          vertex.position[0],
+          vertex.position[1],
+          point.position[0],
+          point.position[1],
+        ];
 
         const newVertex = new ProximityGraph({
-          coords: [coords.flat()],
+          coords,
           group: -1,
         });
 
         const neighbors = await this.findConnectionPoints(newVertex);
+
         for (const neighbor of neighbors) {
           if (newVertex.id === neighbor._id) continue;
-
           newVertex.neighbors.push(neighbor._id);
-          const editPoint = await ProximityGraph.findById(neighbor._id);
-          editPoint.neighbors.push(newVertex.id);
-          await editPoint.save();
         }
+
         await newVertex.save();
       }
     }
+
+    // for await (const vertex of vertices) {
+    //   for (const adjacentID of vertex.adjacentVertices) {
+    //     const adjacentVertex = await Graph.findById(adjacentID);
+
+    //     if (adjacentVertex === null) continue;
+
+    //     const coords = [];
+    //     coords.push(vertex.position);
+    //     coords.push(adjacentVertex.position);
+
+    //     const newVertex = new ProximityGraph({
+    //       coords: [coords.flat()],
+    //       group: -1,
+    //     });
+
+    //     const neighbors = await this.findConnectionPoints(newVertex);
+    //     for (const neighbor of neighbors) {
+    //       if (newVertex.id === neighbor._id) continue;
+    //       newVertex.neighbors.push(neighbor._id);
+    //     }
+    //     await newVertex.save();
+    //   }
+    // }
   }
 
   static async generateLineGraph() {
     await Bundle.deleteMany({});
-    const nodes = await ProximityGraph.find({}).lean();
+    const nodes = ProximityGraph.find({}).lean().cursor();
 
-    for (const node of nodes) {
+    for await (const node of nodes) {
       if (node.m1.length > 0 && node.m2.length > 0) {
         await Bundle.create({ source: node.m1, target: node.m2 });
 
