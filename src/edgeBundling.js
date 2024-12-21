@@ -177,6 +177,19 @@ export default class EdgeBundling {
         await ProximityGraph.create(data);
       }
     }
+
+    await ProximityGraph.updateMany({}, { neighbors: [] });
+
+    const nodes = ProximityGraph.find({}).cursor();
+    for await (const node of nodes) {
+      const neighbors = await this.findConnectionPoints(node);
+      for (const neighbor of neighbors) {
+        if (node.id === neighbor._id) continue;
+
+        node.neighbors.push(neighbor._id);
+      }
+      await node.save();
+    }
   }
 
   // to be minimized
