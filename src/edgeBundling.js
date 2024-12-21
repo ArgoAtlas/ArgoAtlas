@@ -24,6 +24,11 @@ export default class EdgeBundling {
           },
         },
         {
+          $match: {
+            _id: { $ne: vertex.id },
+          },
+        },
+        {
           $addFields: {
             distance: {
               $let: {
@@ -54,11 +59,6 @@ export default class EdgeBundling {
                 in: { $sqrt: "$$pow" },
               },
             },
-          },
-        },
-        {
-          $match: {
-            _id: { $ne: vertex.id },
           },
         },
         // {
