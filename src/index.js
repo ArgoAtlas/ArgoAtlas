@@ -182,7 +182,7 @@ async function updateMap() {
         getColor: [255, 255, 255],
         getSourcePosition: (d) => [d.source[0], d.source[1]],
         getTargetPosition: (d) => [d.target[0], d.target[1]],
-        widthMinPixels: 1,
+        widthMinPixels: 2,
       }),
       // new PathLayer({
       //   id: "paths",
