@@ -459,6 +459,29 @@ app.get("/ports", (req, res) => {
   res.send(ports);
 });
 
+app.get("/health", (req, res) => {
+  const aisStatus = aisSocket
+    ? {
+        connected: aisSocket.readyState === WebSocket.OPEN,
+        state: ["CONNECTING", "OPEN", "CLOSING", "CLOSED"][
+          aisSocket.readyState
+        ],
+        reconnectAttempts,
+      }
+    : {
+        connected: false,
+        state: "NOT_INITIALIZED",
+        reconnectAttempts,
+      };
+
+  res.json({
+    status: "ok",
+    database:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    ais: aisStatus,
+    uptime: process.uptime(),
+  });
+});
 app.listen(5000, () => {
   console.log("Server listening on port 5000");
 });
