@@ -16,13 +16,22 @@ import { k } from "./src/edgeBundling.js";
 const app = express();
 app.use(cors());
 
-const socket = new WebSocket("wss://stream.aisstream.io/v0/stream");
+let aisSocket = null;
+let reconnectAttempts = 0;
+let reconnectTimeout = null;
+const MAX_RECONNECT_DELAY = 60000;
+const INITIAL_RECONNECT_DELAY = 1000;
+const RECONNECT_BACKOFF_MULTIPLIER = 2;
 
 const decisionInterval = 1;
 const referenceValue = decisionInterval / 2;
 const maximumEntries = 5;
 
-mongoose.connect(config.dbURI).then(() => console.log("connected to db!"));
+mongoose.connect(config.dbURI).then(() => {
+  console.log("connected to db!");
+  aggregateFlows();
+  connectAIS();
+});
 
 // compute cumulative sum, used to detect deviations
 function calculateCusum(prevPositive, prevNegative, target, sample) {
@@ -300,34 +309,120 @@ async function bundling() {
   setTimeout(bundling, 10000);
 }
 
-socket.addEventListener("open", () => {
-  const subscriptionMessage = {
-    Apikey: config.aisKey,
-    BoundingBoxes: [
-      [
-        [-90, -180],
-        [90, 180],
-      ],
-    ],
-  };
-  socket.send(JSON.stringify(subscriptionMessage));
-});
-
-socket.addEventListener("message", (event) => {
-  const message = JSON.parse(event.data);
-
-  switch (message.MessageType) {
-    case "PositionReport":
-      if (message.Message.PositionReport.PositionAccuracy) {
-        updatePosition(message.MetaData.MMSI, message.Message.PositionReport);
-        updatePath(message.MetaData.MMSI, message.Message.PositionReport);
-      }
-      break;
-    case "ShipStaticData":
-      updateShipData(message.MetaData.MMSI, message.Message.ShipStaticData);
-      break;
+function connectAIS() {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
   }
-});
+
+  console.log("Connecting to AIS stream...");
+  aisSocket = new WebSocket("wss://stream.aisstream.io/v0/stream");
+
+  aisSocket.addEventListener("open", () => {
+    console.log("✓ Connected to AIS stream");
+    reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+
+    const subscriptionMessage = {
+      Apikey: config.aisKey,
+      BoundingBoxes: [
+        [
+          [-90, -180],
+          [90, 180],
+        ],
+      ],
+    };
+
+    try {
+      aisSocket.send(JSON.stringify(subscriptionMessage));
+      console.log("✓ Subscribed to global AIS data");
+    } catch (error) {
+      console.error("Failed to send subscription message:", error.message);
+    }
+  });
+
+  aisSocket.addEventListener("message", (event) => {
+    try {
+      const message = JSON.parse(event.data);
+
+      switch (message.MessageType) {
+        case "PositionReport":
+          if (message.Message.PositionReport.PositionAccuracy) {
+            updatePosition(
+              message.MetaData.MMSI,
+              message.Message.PositionReport,
+            );
+            updatePath(message.MetaData.MMSI, message.Message.PositionReport);
+          }
+          break;
+        case "ShipStaticData":
+          updateShipData(message.MetaData.MMSI, message.Message.ShipStaticData);
+          break;
+      }
+    } catch (error) {
+      console.error("Error processing AIS message:", error.message);
+    }
+  });
+
+  aisSocket.addEventListener("error", (error) => {
+    console.error("AIS WebSocket error:", error.message || "Unknown error");
+  });
+
+  aisSocket.addEventListener("close", (event) => {
+    console.log(
+      `✗ AIS connection closed. Code: ${event.code}, Reason: ${event.reason || "No reason provided"}`,
+    );
+
+    const delay = Math.min(
+      INITIAL_RECONNECT_DELAY *
+        Math.pow(RECONNECT_BACKOFF_MULTIPLIER, reconnectAttempts),
+      MAX_RECONNECT_DELAY,
+    );
+
+    reconnectAttempts++;
+
+    console.log(
+      `⟳ Reconnecting to AIS stream in ${delay / 1000}s (attempt ${reconnectAttempts})...`,
+    );
+
+    reconnectTimeout = setTimeout(() => {
+      connectAIS();
+    }, delay);
+  });
+
+  let heartbeatInterval = setInterval(() => {
+    if (aisSocket && aisSocket.readyState === WebSocket.OPEN) {
+      console.log("AIS connection alive");
+    } else if (aisSocket && aisSocket.readyState === WebSocket.CONNECTING) {
+      console.log("AIS connection still establishing...");
+    } else {
+      console.log("AIS connection appears dead, clearing heartbeat");
+      clearInterval(heartbeatInterval);
+    }
+  }, 30000);
+  aisSocket.addEventListener("close", () => {
+    clearInterval(heartbeatInterval);
+  });
+}
+
+function shutdown() {
+  console.log("\nShutting down gracefully...");
+
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+  }
+
+  if (aisSocket) {
+    aisSocket.close(1000, "Server shutting down");
+  }
+
+  mongoose.disconnect().then(() => {
+    console.log("Disconnected from database");
+    process.exit(0);
+  });
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 app.get("/ships", async (req, res) => {
   const ships = await Ship.find().lean();
