@@ -1,6 +1,4 @@
 import Graph from "../models/graph.js";
-import ProximityGraph from "../models/proximityGraph.js";
-import EdgeBundling from "./edgeBundling.js";
 
 export default class GraphHelper {
   static async addVertex(position) {

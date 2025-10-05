@@ -5,13 +5,11 @@ import config from "./config.json" with { type: "json" };
 import Ship from "./models/ship.js";
 import Path from "./models/path.js";
 import Graph from "./models/graph.js";
-import Bundle from "./models/bundle.js";
-import ProximityGraph from "./models/proximityGraph.js";
+import FlowCell from "./models/flowCell.js";
 import GraphHelper from "./src/graphHelper.js";
-import EdgeBundling from "./src/edgeBundling.js";
+import H3FlowAggregation from "./src/h3FlowAggregation.js";
 import ports from "./ports.json" with { type: "json" };
 import WebSocket from "ws";
-import { k } from "./src/edgeBundling.js";
 
 const app = express();
 app.use(cors());
@@ -26,6 +24,7 @@ const RECONNECT_BACKOFF_MULTIPLIER = 2;
 const decisionInterval = 1;
 const referenceValue = decisionInterval / 2;
 const maximumEntries = 5;
+const k = 3; // number of nearest neighbors for graph
 
 mongoose.connect(config.dbURI).then(() => {
   console.log("connected to db!");
@@ -303,10 +302,14 @@ async function updateShipData(mmsi, message) {
   }
 }
 
-async function bundling() {
-  await EdgeBundling.performEdgeBundling();
+async function aggregateFlows() {
+  try {
+    await H3FlowAggregation.aggregateAllFlows();
+  } catch (error) {
+    console.error("Flow aggregation error:", error.message);
+  }
 
-  setTimeout(bundling, 10000);
+  setTimeout(aggregateFlows, 5 * 60 * 1000);
 }
 
 function connectAIS() {
@@ -439,19 +442,23 @@ app.get("/graph", async (req, res) => {
   res.send(graph);
 });
 
-app.get("/bundle", async (req, res) => {
-  const bundle = await Bundle.find().lean();
-  res.send(bundle);
-});
+app.get("/flows", async (req, res) => {
+  const zoom = parseInt(req.query.zoom) || 2;
+  const resolution = H3FlowAggregation.getResolutionForZoom(zoom);
 
-app.get("/proximityGraph", async (req, res) => {
-  const proximityGraph = await ProximityGraph.find().lean();
-  res.send(proximityGraph);
+  const minCount = parseInt(req.query.minCount) || 1;
+
+  const flows = await H3FlowAggregation.getFlowsForVisualization(
+    resolution,
+    minCount,
+  );
+  res.send(flows);
 });
 
 app.get("/ports", (req, res) => {
   res.send(ports);
 });
 
-app.listen(5000);
-bundling();
+app.listen(5000, () => {
+  console.log("Server listening on port 5000");
+});

@@ -126,20 +126,132 @@ function updateShipTooltip({ object, x, y }) {
   }
 }
 
+let cachedFlows = {};
+let currentResolution = null;
+let isLoadingFlows = false;
+let mapInitialized = false;
+
+function getResolutionForZoom(zoom) {
+  if (zoom <= 4) return 3; // LOW
+  if (zoom <= 7) return 4; // MEDIUM
+  return 5; // HIGH
+}
+
+async function loadFlows() {
+  const zoom = map.getZoom();
+  const resolution = getResolutionForZoom(zoom);
+
+  if (isLoadingFlows) return cachedFlows[currentResolution] || [];
+
+  if (cachedFlows[resolution]) {
+    return cachedFlows[resolution];
+  }
+
+  isLoadingFlows = true;
+  try {
+    const flowsResponse = await fetch(
+      `${serverAddress}/flows?zoom=${zoom}&minCount=2`,
+    );
+    const flows = await flowsResponse.json();
+    cachedFlows[resolution] = flows;
+    return flows;
+  } catch (error) {
+    console.error("Error loading flows:", error);
+    return [];
+  } finally {
+    isLoadingFlows = false;
+  }
+}
+
+// Function to update only the flow layer
+async function updateFlowLayer(forceRecreate = false) {
+  // Skip if map not initialized yet
+  if (!mapInitialized) {
+    return;
+  }
+
+  const zoom = map.getZoom();
+  const resolution = getResolutionForZoom(zoom);
+
+  const resolutionChanged = resolution !== currentResolution;
+
+  if (resolutionChanged) {
+    currentResolution = resolution;
+  }
+
+  if (resolutionChanged || forceRecreate) {
+    if (!deckOverlay || !deckOverlay.props || !deckOverlay.props.layers) {
+      return;
+    }
+
+    if (cachedFlows[resolution]) {
+      updateFlowLayerWithData(cachedFlows[resolution]);
+    }
+
+    if (!isLoadingFlows && resolutionChanged) {
+      loadFlows().then((flows) => {
+        if (flows && flows.length > 0) {
+          updateFlowLayerWithData(flows);
+        }
+      });
+    }
+  }
+}
+
+function updateFlowLayerWithData(flows) {
+  const maxIntensity = flows.reduce(
+    (max, f) => Math.max(max, f.intensity),
+    0.1,
+  );
+
+  const currentLayers = deckOverlay.props.layers;
+
+  const updatedLayers = currentLayers.map((layer) => {
+    if (layer.id === "h3-flows") {
+      return new LineLayer({
+        id: "h3-flows",
+        data: flows,
+        getSourcePosition: (d) => d.source,
+        getTargetPosition: (d) => d.target,
+        getColor: (d) => {
+          const intensity = d.intensity / maxIntensity;
+          return [
+            100 + intensity * 155,
+            150 + intensity * 105,
+            200 + intensity * 55,
+            150 + intensity * 105,
+          ];
+        },
+        getWidth: (d) => {
+          const intensity = d.intensity / maxIntensity;
+          return 1 + intensity * 4;
+        },
+        widthMinPixels: 1,
+        widthMaxPixels: 8,
+        parameters: {
+          depthTest: false,
+          blend: true,
+        },
+      });
+    }
+    return layer;
+  });
+
+  deckOverlay.setProps({ layers: updatedLayers });
+}
+
 async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
-  // const pathsResponse = await fetch(`${serverAddress}/paths`);
-  // const graphResponse = await fetch(`${serverAddress}/graph`);
-  const bundleResponse = await fetch(`${serverAddress}/bundle`);
-  // const proximityGraphResponse = await fetch(`${serverAddress}/proximityGraph`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
-  // const paths = await pathsResponse.json();
-  // const graph = await graphResponse.json();
-  const bundle = await bundleResponse.json();
-  // const proximityGraph = await proximityGraphResponse.json();
+  const flows = await loadFlows();
+
+  const maxIntensity = flows.reduce(
+    (max, f) => Math.max(max, f.intensity),
+    0.1,
+  );
 
   deckOverlay.setProps({
     layers: [
@@ -167,44 +279,61 @@ async function updateMap() {
         pickable: true,
         onHover: updateShipTooltip,
       }),
-      // new ScatterplotLayer({
-      //   id: "graph",
-      //   data: graph,
-      //   filled: true,
-      //   getPosition: (d) => [d.position[0], d.position[1]],
-      //   getFillColor: [255, 255, 255],
-      //   radiusMinPixels: 2,
-      //   radiusMaxPixels: 3,
-      // }),
       new LineLayer({
-        id: "bundle",
-        data: bundle,
-        getColor: [255, 255, 255],
-        getSourcePosition: (d) => [d.source[0], d.source[1]],
-        getTargetPosition: (d) => [d.target[0], d.target[1]],
-        widthMinPixels: 2,
+        id: "h3-flows",
+        data: flows,
+        getSourcePosition: (d) => d.source,
+        getTargetPosition: (d) => d.target,
+        getColor: (d) => {
+          const intensity = d.intensity / maxIntensity;
+          return [
+            100 + intensity * 155,
+            150 + intensity * 105,
+            200 + intensity * 55,
+            150 + intensity * 105,
+          ];
+        },
+        getWidth: (d) => {
+          const intensity = d.intensity / maxIntensity;
+          return 1 + intensity * 4; // 1-5 pixels
+        },
+        widthMinPixels: 1,
+        widthMaxPixels: 8,
+        parameters: {
+          depthTest: false,
+          blend: true,
+        },
       }),
-      // new PathLayer({
-      //   id: "paths",
-      //   data: paths,
-      //   getColor: [0, 255, 0],
-      //   getPath: (d) => d.points,
-      //   widthMinPixels: 1,
-      // }),
-      //   new LineLayer({
-      //     id: "proximityGraph",
-      //     data: proximityGraph,
-      //     getColor: [0, 255, 255],
-      //     getSourcePosition: (d) => [d.coords[0], d.coords[1]],
-      //     getTargetPosition: (d) => [d.coords[2], d.coords[3]],
-      //     getWidth: 5,
-      //   }),
     ],
   });
+}
 
-  setTimeout(updateMap, 1000);
+function startPeriodicUpdates() {
+  setTimeout(async () => {
+    await updateMap();
+    startPeriodicUpdates();
+  }, 5000);
 }
 
 map.addControl(deckOverlay);
 
-updateMap();
+updateMap().then(() => {
+  mapInitialized = true;
+  console.log("Initial map update complete, zoom-responsive flows enabled");
+
+  let zoomTimeout;
+  map.on("zoom", () => {
+    updateFlowLayer(true);
+
+    clearTimeout(zoomTimeout);
+    zoomTimeout = setTimeout(() => {
+      updateFlowLayer(true);
+    }, 50);
+  });
+
+  map.on("moveend", () => {
+    updateFlowLayer(true);
+  });
+
+  startPeriodicUpdates();
+});
