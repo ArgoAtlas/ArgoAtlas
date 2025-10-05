@@ -9,7 +9,11 @@
     "watch": "webpack --watch",
     "start": "webpack serve --open",
     "prepare": "husky",
-    "devStart": "nodemon server.js"
+    "devStart": "nodemon server.js",
+    "flows:aggregate": "node src/flowCli.js aggregate",
+    "flows:stats": "node src/flowCli.js stats",
+    "flows:cleanup": "node src/flowCli.js cleanup",
+    "flows:clear": "node src/flowCli.js clear"
   },
   "repository": {
     "type": "git",
