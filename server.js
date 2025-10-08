@@ -4,9 +4,7 @@ import mongoose from "mongoose";
 import config from "./config.json" with { type: "json" };
 import Ship from "./models/ship.js";
 import Path from "./models/path.js";
-import Graph from "./models/graph.js";
 import FlowCell from "./models/flowCell.js";
-import GraphHelper from "./src/graphHelper.js";
 import H3FlowAggregation from "./src/h3FlowAggregation.js";
 import ports from "./ports.json" with { type: "json" };
 import WebSocket from "ws";
@@ -24,7 +22,6 @@ const RECONNECT_BACKOFF_MULTIPLIER = 2;
 const decisionInterval = 1;
 const referenceValue = decisionInterval / 2;
 const maximumEntries = 5;
-const k = 3; // number of nearest neighbors for graph
 
 mongoose.connect(config.dbURI).then(() => {
   console.log("connected to db!");
@@ -214,44 +211,6 @@ async function updatePath(mmsi, message) {
   ) {
     data.points.push([message.Longitude, message.Latitude]);
 
-    const nearbyPoints = await Graph.find({
-      position: {
-        $near: {
-          $geometry: {
-            type: "Point",
-            coordinates: [message.Longitude, message.Latitude],
-          },
-          $maxDistance: 450,
-        },
-      },
-    });
-
-    if (nearbyPoints.length <= 0) {
-      const newVertex = new Graph({
-        position: [message.Longitude, message.Latitude],
-      });
-      await newVertex.save();
-
-      const connectionPoints = await Graph.find({
-        position: {
-          $near: {
-            $geometry: {
-              type: "Point",
-              coordinates: [message.Longitude, message.Latitude],
-            },
-            $maxDistance: 500,
-          },
-        },
-      }).limit(k);
-
-      for (const point of connectionPoints) {
-        if (newVertex.id !== point.id) {
-          await GraphHelper.addEdge(newVertex.id, point.id);
-          // await GraphHelper.addEdge(point.id, newVertex.id);
-        }
-      }
-    }
-
     data.latitude.controlPositive = 0;
     data.latitude.controlNegative = 0;
     data.longitude.controlPositive = 0;
@@ -435,11 +394,6 @@ app.get("/ships", async (req, res) => {
 app.get("/paths", async (req, res) => {
   const paths = await Path.find().lean();
   res.send(paths);
-});
-
-app.get("/graph", async (req, res) => {
-  const graph = await Graph.find().lean();
-  res.send(graph);
 });
 
 app.get("/flows", async (req, res) => {
