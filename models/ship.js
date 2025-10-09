@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 const shipSchema = new mongoose.Schema({
   mmsi: { type: Number, index: true },
-  name: String,
-  callSign: String,
-  destination: String,
+  name: { type: String, default: "UNKNOWN" },
+  callSign: { type: String, default: "UNKNOWN" },
+  destination: { type: String, default: "UNKNOWN" },
   position: {
-    longitude: Number,
-    latitude: Number,
+    longitude: { type: Number, default: 0 },
+    latitude: { type: Number, default: 0 },
   },
 });
 
