@@ -19,61 +19,50 @@ const MAX_RECONNECT_DELAY = 60000;
 const INITIAL_RECONNECT_DELAY = 1000;
 const RECONNECT_BACKOFF_MULTIPLIER = 2;
 
-const decisionInterval = 1;
-const referenceValue = decisionInterval / 2;
-const maximumEntries = 5;
+const MIN_DISTANCE_METERS = 100;
+const MIN_TIME_INTERVAL_MS = 5 * 60 * 1000;
+const MAX_PATH_POINTS = 1000;
+const PATH_RETENTION_DAYS = 7;
 
 mongoose.connect(config.dbURI).then(() => {
   console.log("connected to db!");
   aggregateFlows();
+  cleanupOldPaths();
   connectAIS();
 });
 
-// compute cumulative sum, used to detect deviations
-function calculateCusum(prevPositive, prevNegative, target, sample) {
-  const positiveSum = Math.max(
-    0,
-    prevPositive + sample - target - referenceValue,
-  );
-  const negativeSum = Math.max(
-    0,
-    prevNegative - sample + target - referenceValue,
-  );
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
 
-  return [positiveSum, negativeSum];
-}
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) *
+      Math.cos(phi2) *
+      Math.sin(deltaLambda / 2) *
+      Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-function checkCusumThreshold(result) {
-  return result[0] > decisionInterval || result[1] > decisionInterval;
-}
-
-function calculateAverage(values) {
-  const total = values.reduce((a, b) => a + b, 0);
-
-  return total / values.length || 0;
+  return R * c;
 }
 
 async function updatePosition(mmsi, message) {
-  const ships = await Ship.find({ mmsi: mmsi });
-
-  if (ships.length > 0) {
-    ships.forEach((ship) => {
-      ship.position.longitude = message.Longitude;
-      ship.position.latitude = message.Latitude;
-      ship.save();
-    });
-  } else {
-    await Ship.create({
-      mmsi: mmsi,
-      name: "UNKNOWN",
-      callSign: "UNKNOWN",
-      destination: "UNKNOWN",
-      position: {
-        longitude: message.Longitude,
-        latitude: message.Latitude,
+  await Ship.findOneAndUpdate(
+    { mmsi: mmsi },
+    {
+      $set: {
+        "position.longitude": message.Longitude,
+        "position.latitude": message.Latitude,
       },
-    });
-  }
+    },
+    {
+      upsert: true,
+      setDefaultsOnInsert: true,
+    },
+  );
 }
 
 async function updatePath(mmsi, message) {
@@ -82,156 +71,48 @@ async function updatePath(mmsi, message) {
 
   let data = {
     points: [],
-    latitude: {
-      deltas: [],
-      previous: [],
-      controlPositive: 0,
-      controlNegative: 0,
-    },
-    longitude: {
-      deltas: [],
-      previous: [],
-      controlPositive: 0,
-      controlNegative: 0,
-    },
-    cog: {
-      deltas: [],
-      previous: [],
-      controlPositive: 0,
-      controlNegative: 0,
-    },
-    sog: {
-      deltas: [],
-      previous: [],
-      controlPositive: 0,
-      controlNegative: 0,
-    },
-    turnRate: {
-      deltas: [],
-      previous: [],
-      controlPositive: 0,
-      controlNegative: 0,
-    },
+    lastPoint: null,
+    lastPointTime: null,
   };
 
   if (path) {
-    data = {
-      points: path.points,
-      latitude: path.latitude,
-      longitude: path.longitude,
-      cog: path.cog,
-      sog: path.sog,
-      turnRate: path.turnRate,
-    };
+    data.points = path.points || [];
+    data.lastPoint = path.lastPoint || null;
+    data.lastPointTime = path.lastPointTime || null;
   }
 
-  // reset path if position data differs strongly
-  if (
-    Math.abs(
-      data.latitude.previous[data.latitude.previous.length - 1] -
-        message.Latitude,
-    ) > 0.5 ||
-    Math.abs(
-      data.longitude.previous[data.latitude.previous.length - 1] -
-        message.Longitude,
-    ) > 0.5
-  ) {
-    data.points = [];
-    data.latitude.previous = [];
-    data.latitude.controlPositive = 0;
-    data.latitude.controlNegative = 0;
-    data.longitude.previous = [];
-    data.longitude.controlPositive = 0;
-    data.longitude.controlNegative = 0;
-  }
+  const currentTime = Date.now();
+  let shouldAddPoint = false;
 
-  const latitudeCusum = calculateCusum(
-    data.latitude.controlPositive,
-    data.latitude.controlNegative,
-    calculateAverage(data.latitude.previous),
-    message.Latitude,
-  );
-  const longitudeCusum = calculateCusum(
-    data.longitude.controlPositive,
-    data.longitude.controlNegative,
-    calculateAverage(data.longitude.previous),
-    message.Longitude,
-  );
-  const cogCusum = calculateCusum(
-    data.cog.controlPositive,
-    data.cog.controlNegative,
-    calculateAverage(data.cog.previous),
-    message.Cog,
-  );
-  const sogCusum = calculateCusum(
-    data.sog.controlPositive,
-    data.sog.controlNegative,
-    calculateAverage(data.sog.previous),
-    message.Sog,
-  );
-  const turnRateCusum = calculateCusum(
-    data.turnRate.controlPositive,
-    data.turnRate.controlNegative,
-    calculateAverage(data.turnRate.previous),
-    message.RateOfTurn,
-  );
-
-  if (data.latitude.previous.length >= maximumEntries) {
-    data.latitude.previous.shift();
-  }
-
-  if (data.longitude.previous.length >= maximumEntries) {
-    data.longitude.previous.shift();
-  }
-
-  if (data.cog.previous.length >= maximumEntries) {
-    data.cog.previous.shift();
-  }
-
-  if (data.sog.previous.length >= maximumEntries) {
-    data.sog.previous.shift();
-  }
-
-  if (data.turnRate.previous.length >= maximumEntries) {
-    data.turnRate.previous.shift();
-  }
-
-  data.latitude.previous.push(message.Latitude);
-  data.longitude.previous.push(message.Longitude);
-  data.cog.previous.push(message.Cog);
-  data.sog.previous.push(message.Sog);
-  data.turnRate.previous.push(message.RateOfTurn);
-
-  if (
-    checkCusumThreshold(latitudeCusum) ||
-    checkCusumThreshold(longitudeCusum) ||
-    checkCusumThreshold(cogCusum) ||
-    checkCusumThreshold(sogCusum) ||
-    checkCusumThreshold(turnRateCusum)
-  ) {
-    data.points.push([message.Longitude, message.Latitude]);
-
-    data.latitude.controlPositive = 0;
-    data.latitude.controlNegative = 0;
-    data.longitude.controlPositive = 0;
-    data.longitude.controlNegative = 0;
-    data.cog.controlPositive = 0;
-    data.cog.controlNegative = 0;
-    data.sog.controlPositive = 0;
-    data.sog.controlNegative = 0;
-    data.turnRate.controlPositive = 0;
-    data.turnRate.controlNegative = 0;
+  if (!data.lastPoint) {
+    shouldAddPoint = true;
   } else {
-    data.latitude.controlPositive = latitudeCusum[0];
-    data.latitude.controlNegative = latitudeCusum[1];
-    data.longitude.controlPositive = longitudeCusum[0];
-    data.longitude.controlNegative = longitudeCusum[1];
-    data.cog.controlPositive = cogCusum[0];
-    data.cog.controlNegative = cogCusum[1];
-    data.sog.controlPositive = sogCusum[0];
-    data.sog.controlNegative = sogCusum[1];
-    data.turnRate.controlPositive = turnRateCusum[0];
-    data.turnRate.controlNegative = turnRateCusum[1];
+    const distance = calculateDistance(
+      data.lastPoint[1],
+      data.lastPoint[0],
+      message.Latitude,
+      message.Longitude,
+    );
+    const timeSinceLastPoint = currentTime - data.lastPointTime;
+
+    if (
+      distance >= MIN_DISTANCE_METERS &&
+      timeSinceLastPoint >= MIN_TIME_INTERVAL_MS
+    ) {
+      shouldAddPoint = true;
+    }
+  }
+
+  if (shouldAddPoint) {
+    const newPoint = [message.Longitude, message.Latitude];
+    data.points.push(newPoint);
+
+    if (data.points.length > MAX_PATH_POINTS) {
+      data.points = data.points.slice(-MAX_PATH_POINTS);
+    }
+
+    data.lastPoint = newPoint;
+    data.lastPointTime = currentTime;
   }
 
   await Path.updateOne(filter, data, { upsert: true });
@@ -269,6 +150,22 @@ async function aggregateFlows() {
   }
 
   setTimeout(aggregateFlows, 5 * 60 * 1000);
+}
+
+async function cleanupOldPaths() {
+  try {
+    const cutoffTime = Date.now() - PATH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    const result = await Path.deleteMany({
+      lastPointTime: { $lt: cutoffTime },
+    });
+    if (result.deletedCount > 0) {
+      console.log(`Deleted ${result.deletedCount} old paths`);
+    }
+  } catch (error) {
+    console.error("Path cleanup error:", error.message);
+  }
+
+  setTimeout(cleanupOldPaths, 24 * 60 * 60 * 1000); // Run daily
 }
 
 function connectAIS() {
