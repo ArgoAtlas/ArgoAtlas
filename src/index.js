@@ -3,7 +3,7 @@ import {
   GeoJsonLayer,
   ScatterplotLayer,
   PathLayer,
-  LineLayer,
+  ArcLayer,
 } from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -128,8 +128,32 @@ function updateShipTooltip({ object, x, y }) {
 
 let cachedFlows = {};
 let currentResolution = null;
-let isLoadingFlows = false;
 let mapInitialized = false;
+
+// Preload all resolutions
+async function preloadAllFlows() {
+  const resolutions = [
+    { resolution: 3, zoom: 3 }, // LOW: zoom <= 4
+    { resolution: 4, zoom: 5 }, // MEDIUM: zoom 5-7
+    { resolution: 5, zoom: 8 }, // HIGH: zoom >= 8
+  ];
+  await Promise.all(
+    resolutions.map(async ({ resolution, zoom }) => {
+      try {
+        const flowsResponse = await fetch(
+          `${serverAddress}/flows?zoom=${zoom}&minCount=2`,
+        );
+        const flows = await flowsResponse.json();
+        cachedFlows[resolution] = flows;
+      } catch (error) {
+        console.error(
+          `Error loading flows for resolution ${resolution}:`,
+          error,
+        );
+      }
+    }),
+  );
+}
 
 function getResolutionForZoom(zoom) {
   if (zoom <= 4) return 3; // LOW
@@ -141,32 +165,18 @@ async function loadFlows() {
   const zoom = map.getZoom();
   const resolution = getResolutionForZoom(zoom);
 
-  if (isLoadingFlows) return cachedFlows[currentResolution] || [];
-
-  if (cachedFlows[resolution]) {
-    return cachedFlows[resolution];
-  }
-
-  isLoadingFlows = true;
-  try {
-    const flowsResponse = await fetch(
-      `${serverAddress}/flows?zoom=${zoom}&minCount=2`,
-    );
-    const flows = await flowsResponse.json();
-    cachedFlows[resolution] = flows;
-    return flows;
-  } catch (error) {
-    console.error("Error loading flows:", error);
-    return [];
-  } finally {
-    isLoadingFlows = false;
-  }
+  // Just return cached data (should always be available after preload)
+  return cachedFlows[resolution] || [];
 }
 
 // Function to update only the flow layer
-async function updateFlowLayer(forceRecreate = false) {
+function updateFlowLayer() {
   // Skip if map not initialized yet
   if (!mapInitialized) {
+    return;
+  }
+
+  if (!deckOverlay || !deckOverlay.props || !deckOverlay.props.layers) {
     return;
   }
 
@@ -179,22 +189,9 @@ async function updateFlowLayer(forceRecreate = false) {
     currentResolution = resolution;
   }
 
-  if (resolutionChanged || forceRecreate) {
-    if (!deckOverlay || !deckOverlay.props || !deckOverlay.props.layers) {
-      return;
-    }
-
-    if (cachedFlows[resolution]) {
-      updateFlowLayerWithData(cachedFlows[resolution]);
-    }
-
-    if (!isLoadingFlows && resolutionChanged) {
-      loadFlows().then((flows) => {
-        if (flows && flows.length > 0) {
-          updateFlowLayerWithData(flows);
-        }
-      });
-    }
+  // Use cached data (should always be available)
+  if (cachedFlows[resolution]) {
+    updateFlowLayerWithData(cachedFlows[resolution]);
   }
 }
 
@@ -208,12 +205,21 @@ function updateFlowLayerWithData(flows) {
 
   const updatedLayers = currentLayers.map((layer) => {
     if (layer.id === "h3-flows") {
-      return new LineLayer({
+      return new ArcLayer({
         id: "h3-flows",
         data: flows,
         getSourcePosition: (d) => d.source,
         getTargetPosition: (d) => d.target,
-        getColor: (d) => {
+        getSourceColor: (d) => {
+          const intensity = d.intensity / maxIntensity;
+          return [
+            100 + intensity * 155,
+            150 + intensity * 105,
+            200 + intensity * 55,
+            150 + intensity * 105,
+          ];
+        },
+        getTargetColor: (d) => {
           const intensity = d.intensity / maxIntensity;
           return [
             100 + intensity * 155,
@@ -228,6 +234,7 @@ function updateFlowLayerWithData(flows) {
         },
         widthMinPixels: 1,
         widthMaxPixels: 8,
+        greatCircle: true,
         parameters: {
           depthTest: false,
           blend: true,
@@ -279,12 +286,21 @@ async function updateMap() {
         pickable: true,
         onHover: updateShipTooltip,
       }),
-      new LineLayer({
+      new ArcLayer({
         id: "h3-flows",
         data: flows,
         getSourcePosition: (d) => d.source,
         getTargetPosition: (d) => d.target,
-        getColor: (d) => {
+        getSourceColor: (d) => {
+          const intensity = d.intensity / maxIntensity;
+          return [
+            100 + intensity * 155,
+            150 + intensity * 105,
+            200 + intensity * 55,
+            150 + intensity * 105,
+          ];
+        },
+        getTargetColor: (d) => {
           const intensity = d.intensity / maxIntensity;
           return [
             100 + intensity * 155,
@@ -295,10 +311,11 @@ async function updateMap() {
         },
         getWidth: (d) => {
           const intensity = d.intensity / maxIntensity;
-          return 1 + intensity * 4; // 1-5 pixels
+          return 1 + intensity * 4;
         },
         widthMinPixels: 1,
         widthMaxPixels: 8,
+        greatCircle: true,
         parameters: {
           depthTest: false,
           blend: true,
@@ -317,23 +334,20 @@ function startPeriodicUpdates() {
 
 map.addControl(deckOverlay);
 
-updateMap().then(() => {
-  mapInitialized = true;
-  console.log("Initial map update complete, zoom-responsive flows enabled");
+// Preload all flow resolutions, then initialize map
+preloadAllFlows().then(() => {
+  updateMap().then(() => {
+    mapInitialized = true;
+    console.log("Initial map update complete, zoom-responsive flows enabled");
 
-  let zoomTimeout;
-  map.on("zoom", () => {
-    updateFlowLayer(true);
+    map.on("zoom", () => {
+      updateFlowLayer();
+    });
 
-    clearTimeout(zoomTimeout);
-    zoomTimeout = setTimeout(() => {
-      updateFlowLayer(true);
-    }, 50);
+    map.on("moveend", () => {
+      updateFlowLayer();
+    });
+
+    startPeriodicUpdates();
   });
-
-  map.on("moveend", () => {
-    updateFlowLayer(true);
-  });
-
-  startPeriodicUpdates();
 });
