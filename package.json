@@ -33,6 +33,7 @@
     "h3-js": "^4.3.0",
     "maplibre-gl": "^4.3.0",
     "mongoose": "^8.2.3",
+    "searoute-js": "^0.1.0",
     "ws": "^8.16.0"
   },
   "devDependencies": {

@@ -9,6 +9,7 @@ import H3FlowAggregation from "./src/h3FlowAggregation.js";
 import ports from "./ports.json" with { type: "json" };
 import chokepoints from "./chokepoints.json" with { type: "json" };
 import WebSocket from "ws";
+import searoute from "searoute-js";
 
 const app = express();
 app.use(cors());
@@ -16,6 +17,7 @@ app.use(cors());
 let aisSocket = null;
 let reconnectAttempts = 0;
 let reconnectTimeout = null;
+let combinedRoutes = [];
 const MAX_RECONNECT_DELAY = 60000;
 const INITIAL_RECONNECT_DELAY = 1000;
 const RECONNECT_BACKOFF_MULTIPLIER = 2;
@@ -124,6 +126,106 @@ async function updatePath(mmsi, message) {
   }
 
   await Path.updateOne(filter, data, { upsert: true });
+}
+
+async function updateRoutes() {
+  const shipsResponse = await fetch(`http://localhost:5000/ships`);
+  const portsResponse = await fetch(`http://localhost:5000/ports`);
+
+  const ships = await shipsResponse.json();
+  const ports = await portsResponse.json();
+
+  combinedRoutes = [];
+
+  ships.forEach((ship) => {
+    let shipDestination =
+      typeof ship.destination === "string"
+        ? ship.destination.trim().toLowerCase()
+        : ""; // Check if ship has destination data
+    if (shipDestination.includes(">")) {
+      // Extract the part of the destination that matches the port name
+      shipDestination = shipDestination.split(">")[1].trim(); // Extract part after '>'
+    }
+
+    if (
+      typeof ship.position.longitude !== "number" ||
+      typeof ship.position.latitude !== "number"
+    ) {
+      // make sure coordinates are valid
+      return;
+    }
+
+    const shipCoords = [ship.position.longitude, ship.position.latitude];
+
+    // Iterate over all ports to find matching destination port
+    for (const port of ports.features) {
+      const portName = port.properties.name.trim().toLowerCase();
+      const portCoords = [
+        port.geometry.coordinates[0],
+        port.geometry.coordinates[1],
+      ];
+
+      if (shipDestination === portName) {
+        // Check if the port matches the ship's destination
+        try {
+          // Create GeoJSON objects for origin (ship) and destination (port)
+          const origin = {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Point",
+              coordinates: shipCoords,
+            },
+          };
+
+          const destination = {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Point",
+              coordinates: portCoords,
+            },
+          };
+
+          const route = searoute(origin, destination); // Calculate route using searoute-js
+          if (
+            route &&
+            route.geometry &&
+            route.geometry.coordinates &&
+            route.geometry.coordinates.length > 1
+          ) {
+            // Check if the route contains valid data
+            let detailedPath = route.geometry.coordinates;
+
+            if (
+              detailedPath[0][0] !== shipCoords[0] ||
+              detailedPath[0][1] !== shipCoords[1]
+            ) {
+              detailedPath = [shipCoords, ...detailedPath];
+            }
+
+            // Ensure the last coordinate matches the destination port's coordinates
+            if (
+              detailedPath[detailedPath.length - 1][0] !== portCoords[0] ||
+              detailedPath[detailedPath.length - 1][1] !== portCoords[1]
+            ) {
+              detailedPath = [...detailedPath, portCoords];
+            }
+
+            const matchedData = {
+              time: ship.time,
+              ship: ship.name.trim(),
+              port: port.properties.name,
+              path: detailedPath,
+            };
+
+            combinedRoutes.push(matchedData);
+          }
+        } catch (error) {}
+        break; // Stop after finding the first matching port
+      }
+    }
+  });
 }
 
 async function updateShipData(mmsi, message) {
@@ -322,6 +424,10 @@ app.get("/chokepoints", (req, res) => {
   res.send(chokepoints);
 });
 
+app.get("/routes", async (req, res) => {
+  res.json(combinedRoutes);
+});
+
 app.get("/health", (req, res) => {
   const aisStatus = aisSocket
     ? {
@@ -345,6 +451,9 @@ app.get("/health", (req, res) => {
     uptime: process.uptime(),
   });
 });
+
 app.listen(5000, () => {
   console.log("Server listening on port 5000");
 });
+
+updateRoutes();

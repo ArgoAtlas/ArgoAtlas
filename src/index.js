@@ -152,6 +152,7 @@ let mapInitialized = false;
 // Layer visibility state
 let layerVisibility = {
   ports: true,
+  routes: false,
   ships: true,
   flows: true,
   chokepoints: true,
@@ -279,10 +280,12 @@ async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
   const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
+  const routesResponse = await fetch(`${serverAddress}/routes`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
   const chokepoints = await chokepointsResponse.json();
+  const routes = await routesResponse.json();
   const flows = await loadFlows();
 
   const maxIntensity = flows.reduce(
@@ -305,6 +308,17 @@ async function updateMap() {
         pickable: true,
         onHover: updatePortTooltip,
         visible: layerVisibility.ports,
+      }),
+      new PathLayer({
+        id: "routes",
+        data: routes,
+        getPath: (d) => d.path,
+        getColor: [255, 255, 255, 50],
+        widthScale: 75,
+        widthMinPixels: 1,
+        widthMaxPixels: 10,
+        pickable: true,
+        visible: layerVisibility.routes,
       }),
       new ArcLayer({
         id: "h3-flows",
@@ -384,6 +398,11 @@ map.addControl(deckOverlay);
 
 document.getElementById("portsToggle").addEventListener("change", (e) => {
   layerVisibility.ports = e.target.checked;
+  updateMap();
+});
+
+document.getElementById("routesToggle").addEventListener("change", (e) => {
+  layerVisibility.routes = e.target.checked;
   updateMap();
 });
 
