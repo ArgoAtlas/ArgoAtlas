@@ -130,6 +130,13 @@ let cachedFlows = {};
 let currentResolution = null;
 let mapInitialized = false;
 
+// Layer visibility state
+let layerVisibility = {
+  ports: true,
+  ships: true,
+  flows: true,
+};
+
 // Preload all resolutions
 async function preloadAllFlows() {
   const resolutions = [
@@ -239,6 +246,7 @@ function updateFlowLayerWithData(flows) {
           depthTest: false,
           blend: true,
         },
+        visible: layerVisibility.flows,
       });
     }
     return layer;
@@ -274,6 +282,7 @@ async function updateMap() {
         pointRadiusMinPixels: 2,
         pickable: true,
         onHover: updatePortTooltip,
+        visible: layerVisibility.ports,
       }),
       new ScatterplotLayer({
         id: "points",
@@ -285,6 +294,7 @@ async function updateMap() {
         radiusMaxPixels: 3,
         pickable: true,
         onHover: updateShipTooltip,
+        visible: layerVisibility.ships,
       }),
       new ArcLayer({
         id: "h3-flows",
@@ -320,6 +330,7 @@ async function updateMap() {
           depthTest: false,
           blend: true,
         },
+        visible: layerVisibility.flows,
       }),
     ],
   });
@@ -333,6 +344,21 @@ function startPeriodicUpdates() {
 }
 
 map.addControl(deckOverlay);
+
+document.getElementById("portsToggle").addEventListener("change", (e) => {
+  layerVisibility.ports = e.target.checked;
+  updateMap();
+});
+
+document.getElementById("shipsToggle").addEventListener("change", (e) => {
+  layerVisibility.ships = e.target.checked;
+  updateMap();
+});
+
+document.getElementById("flowsToggle").addEventListener("change", (e) => {
+  layerVisibility.flows = e.target.checked;
+  updateMap();
+});
 
 // Preload all flow resolutions, then initialize map
 preloadAllFlows().then(() => {
