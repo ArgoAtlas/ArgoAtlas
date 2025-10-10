@@ -23,6 +23,7 @@ const MIN_DISTANCE_METERS = 100;
 const MIN_TIME_INTERVAL_MS = 5 * 60 * 1000;
 const MAX_PATH_POINTS = 1000;
 const PATH_RETENTION_DAYS = 7;
+const MAX_TELEPORT_DISTANCE_METERS = 500000;
 
 mongoose.connect(config.dbURI).then(() => {
   console.log("connected to db!");
@@ -95,7 +96,13 @@ async function updatePath(mmsi, message) {
     );
     const timeSinceLastPoint = currentTime - data.lastPointTime;
 
-    if (
+    if (distance >= MAX_TELEPORT_DISTANCE_METERS) {
+      console.log(
+        `Teleport detected for MMSI ${mmsi}: ${Math.round(distance / 1000)}km - starting new path`,
+      );
+      data.points = [];
+      shouldAddPoint = true;
+    } else if (
       distance >= MIN_DISTANCE_METERS &&
       timeSinceLastPoint >= MIN_TIME_INTERVAL_MS
     ) {
