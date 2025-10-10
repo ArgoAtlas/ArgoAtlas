@@ -7,6 +7,7 @@ import Path from "./models/path.js";
 import FlowCell from "./models/flowCell.js";
 import H3FlowAggregation from "./src/h3FlowAggregation.js";
 import ports from "./ports.json" with { type: "json" };
+import chokepoints from "./chokepoints.json" with { type: "json" };
 import WebSocket from "ws";
 
 const app = express();
@@ -315,6 +316,10 @@ app.get("/flows", async (req, res) => {
 
 app.get("/ports", (req, res) => {
   res.send(ports);
+});
+
+app.get("/chokepoints", (req, res) => {
+  res.send(chokepoints);
 });
 
 app.get("/health", (req, res) => {

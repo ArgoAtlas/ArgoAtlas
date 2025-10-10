@@ -126,6 +126,25 @@ function updateShipTooltip({ object, x, y }) {
   }
 }
 
+function updateChokepointTooltip({ object, x, y }) {
+  if (object) {
+    tooltip.style.display = "block";
+    tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
+    tooltip.style.top = `${y + 10}px`;
+    tooltipTitle.innerText = object.properties.name.trim();
+    tooltipEntries.textContent = "";
+    tooltipEntries.appendChild(createTooltipEntry("Type:", "Chokepoint"));
+    tooltipEntries.appendChild(
+      createTooltipEntry("Width:", `${object.properties.width_km} km`),
+    );
+    tooltipEntries.appendChild(
+      createTooltipEntry("Significance:", object.properties.significance),
+    );
+  } else {
+    tooltip.style.display = "none";
+  }
+}
+
 let cachedFlows = {};
 let currentResolution = null;
 let mapInitialized = false;
@@ -135,6 +154,7 @@ let layerVisibility = {
   ports: true,
   ships: true,
   flows: true,
+  chokepoints: true,
 };
 
 // Preload all resolutions
@@ -258,9 +278,11 @@ function updateFlowLayerWithData(flows) {
 async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
+  const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
+  const chokepoints = await chokepointsResponse.json();
   const flows = await loadFlows();
 
   const maxIntensity = flows.reduce(
@@ -283,18 +305,6 @@ async function updateMap() {
         pickable: true,
         onHover: updatePortTooltip,
         visible: layerVisibility.ports,
-      }),
-      new ScatterplotLayer({
-        id: "points",
-        data: ships,
-        filled: true,
-        getPosition: (d) => [d.position.longitude, d.position.latitude],
-        getFillColor: [255, 0, 0],
-        radiusMinPixels: 2,
-        radiusMaxPixels: 3,
-        pickable: true,
-        onHover: updateShipTooltip,
-        visible: layerVisibility.ships,
       }),
       new ArcLayer({
         id: "h3-flows",
@@ -332,6 +342,33 @@ async function updateMap() {
         },
         visible: layerVisibility.flows,
       }),
+      new ScatterplotLayer({
+        id: "points",
+        data: ships,
+        filled: true,
+        getPosition: (d) => [d.position.longitude, d.position.latitude],
+        getFillColor: [255, 0, 0],
+        radiusMinPixels: 2,
+        radiusMaxPixels: 3,
+        pickable: true,
+        onHover: updateShipTooltip,
+        visible: layerVisibility.ships,
+      }),
+      new GeoJsonLayer({
+        id: "chokepoints",
+        data: chokepoints,
+        pointType: "circle",
+        filled: true,
+        stroked: true,
+        getLineColor: [255, 255, 255],
+        lineWidthMinPixels: 2,
+        getFillColor: [255, 215, 0, 220],
+        pointRadiusMaxPixels: 12,
+        pointRadiusMinPixels: 6,
+        pickable: true,
+        onHover: updateChokepointTooltip,
+        visible: layerVisibility.chokepoints,
+      }),
     ],
   });
 }
@@ -357,6 +394,11 @@ document.getElementById("shipsToggle").addEventListener("change", (e) => {
 
 document.getElementById("flowsToggle").addEventListener("change", (e) => {
   layerVisibility.flows = e.target.checked;
+  updateMap();
+});
+
+document.getElementById("chokepointsToggle").addEventListener("change", (e) => {
+  layerVisibility.chokepoints = e.target.checked;
   updateMap();
 });
 
