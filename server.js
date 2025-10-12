@@ -128,14 +128,14 @@ async function updatePath(mmsi, message) {
   await Path.updateOne(filter, data, { upsert: true });
 }
 
-async function updateRoutes() {
+async function updatePaths() {
   const shipsResponse = await fetch(`http://localhost:5000/ships`);
   const portsResponse = await fetch(`http://localhost:5000/ports`);
 
   const ships = await shipsResponse.json();
   const ports = await portsResponse.json();
 
-  combinedRoutes = [];
+  const combinedData = [];
 
   ships.forEach((ship) => {
     let shipDestination =
@@ -158,7 +158,7 @@ async function updateRoutes() {
     const shipCoords = [ship.position.longitude, ship.position.latitude];
 
     // Iterate over all ports to find matching destination port
-    for (const port of ports.features) {
+    for (const port of ports) {
       const portName = port.properties.name.trim().toLowerCase();
       const portCoords = [
         port.geometry.coordinates[0],
@@ -219,12 +219,16 @@ async function updateRoutes() {
               path: detailedPath,
             };
 
-            combinedRoutes.push(matchedData);
+            combinedData.push(matchedData);
           }
         } catch (error) {}
         break; // Stop after finding the first matching port
       }
     }
+  });
+
+  app.get("/pathsDetailed", async (req, res) => {
+    res.json(combinedData);
   });
 }
 
@@ -424,10 +428,6 @@ app.get("/chokepoints", (req, res) => {
   res.send(chokepoints);
 });
 
-app.get("/routes", async (req, res) => {
-  res.json(combinedRoutes);
-});
-
 app.get("/health", (req, res) => {
   const aisStatus = aisSocket
     ? {
@@ -456,4 +456,4 @@ app.listen(5000, () => {
   console.log("Server listening on port 5000");
 });
 
-updateRoutes();
+updatePaths();

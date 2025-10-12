@@ -1,149 +1,146 @@
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Strait of Hormuz",
-        "significance": "Critical oil transport route - ~21% of global petroleum passes through",
-        "width_km": 39
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [56.25, 26.5667]
-      }
+[
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Strait of Hormuz",
+      "significance": "Critical oil transport route - ~21% of global petroleum passes through",
+      "width_km": 39
     },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Strait of Malacca",
-        "significance": "Connects Indian Ocean to Pacific - major shipping lane",
-        "width_km": 2.8
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [100.35, 1.45]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Suez Canal",
-        "significance": "Connects Mediterranean to Red Sea - 12% of global trade",
-        "width_km": 0.3
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [32.35, 30.5]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Bab el-Mandeb Strait",
-        "significance": "Gateway to Suez Canal - connects Red Sea to Gulf of Aden",
-        "width_km": 29
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [43.35, 12.58]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Panama Canal",
-        "significance": "Connects Atlantic to Pacific - saves ~8,000 nautical miles",
-        "width_km": 0.2
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-79.91, 9.08]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Dover Strait",
-        "significance": "Busiest shipping lane in the world",
-        "width_km": 34
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [1.45, 51.0]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Danish Straits",
-        "significance": "Connects Baltic Sea to North Sea",
-        "width_km": 3
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [12.0, 55.5]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Turkish Straits (Bosphorus)",
-        "significance": "Connects Black Sea to Mediterranean",
-        "width_km": 0.7
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [29.08, 41.12]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Gibraltar Strait",
-        "significance": "Connects Mediterranean to Atlantic",
-        "width_km": 14
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-5.35, 36.0]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Lombok Strait",
-        "significance": "Alternative to Malacca Strait",
-        "width_km": 35
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [115.9, -8.5]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Singapore Strait",
-        "significance": "Major shipping route in Southeast Asia",
-        "width_km": 16
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [103.85, 1.25]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Sunda Strait",
-        "significance": "Connects Java Sea to Indian Ocean",
-        "width_km": 24
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [105.85, -6.0]
-      }
+    "geometry": {
+      "type": "Point",
+      "coordinates": [56.25, 26.5667]
     }
-  ]
-}
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Strait of Malacca",
+      "significance": "Connects Indian Ocean to Pacific - major shipping lane",
+      "width_km": 2.8
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [100.35, 1.45]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Suez Canal",
+      "significance": "Connects Mediterranean to Red Sea - 12% of global trade",
+      "width_km": 0.3
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [32.35, 30.5]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Bab el-Mandeb Strait",
+      "significance": "Gateway to Suez Canal - connects Red Sea to Gulf of Aden",
+      "width_km": 29
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [43.35, 12.58]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Panama Canal",
+      "significance": "Connects Atlantic to Pacific - saves ~8,000 nautical miles",
+      "width_km": 0.2
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-79.91, 9.08]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Dover Strait",
+      "significance": "Busiest shipping lane in the world",
+      "width_km": 34
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [1.45, 51.0]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Danish Straits",
+      "significance": "Connects Baltic Sea to North Sea",
+      "width_km": 3
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [12.0, 55.5]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Turkish Straits (Bosphorus)",
+      "significance": "Connects Black Sea to Mediterranean",
+      "width_km": 0.7
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [29.08, 41.12]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Gibraltar Strait",
+      "significance": "Connects Mediterranean to Atlantic",
+      "width_km": 14
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-5.35, 36.0]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Lombok Strait",
+      "significance": "Alternative to Malacca Strait",
+      "width_km": 35
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [115.9, -8.5]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Singapore Strait",
+      "significance": "Major shipping route in Southeast Asia",
+      "width_km": 16
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [103.85, 1.25]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "name": "Sunda Strait",
+      "significance": "Connects Java Sea to Indian Ocean",
+      "width_km": 24
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [105.85, -6.0]
+    }
+  }
+]

@@ -6,7 +6,9 @@ import {
   ArcLayer,
 } from "@deck.gl/layers";
 import { Map } from "maplibre-gl";
+
 import "maplibre-gl/dist/maplibre-gl.css";
+import moment from "moment-timezone";
 
 const serverAddress = "http://localhost:5000";
 const darkStyle =
@@ -37,9 +39,76 @@ window
 
 await map.once("load");
 
+function convertGeoToScreen([longitude, latitude]) {
+  const point = map.project([longitude, latitude]);
+  return [point.x, point.y]; // Return the x and y pixel positions
+}
+
 const deckOverlay = new MapboxOverlay({
   interleaved: true,
   layers: [],
+  getCursor: () => "default", // set cursor style to default instead of hand
+  onClick: (info, event) => console.log("Clicked:", info, event), // display mouse onClick info i.e. coordinates
+});
+
+let showports = true;
+const portsCheck = document.getElementById("portsCheck");
+portsCheck.addEventListener("change", function () {
+  if (showports) {
+    map.setLayoutProperty("ports", "visibility", "none");
+    showports = false;
+  } else {
+    map.setLayoutProperty("ports", "visibility", "visible");
+    showports = true;
+  }
+});
+
+let showships = true;
+const shipsCheck = document.getElementById("shipsCheck");
+shipsCheck.addEventListener("change", function () {
+  if (showships) {
+    map.setLayoutProperty("ships", "visibility", "none");
+    showships = false;
+  } else {
+    map.setLayoutProperty("ships", "visibility", "visible");
+    showships = true;
+  }
+});
+
+let showchokepoints = true;
+const chokepointsCheck = document.getElementById("chokepointsCheck");
+chokepointsCheck.addEventListener("change", function () {
+  if (showchokepoints) {
+    map.setLayoutProperty("chokepoints", "visibility", "none");
+    showchokepoints = false;
+  } else {
+    map.setLayoutProperty("chokepoints", "visibility", "visible");
+    showchokepoints = true;
+  }
+});
+
+let showPaths = true;
+const pathsCheck = document.getElementById("pathsCheck");
+pathsCheck.addEventListener("change", function () {
+  if (showPaths) {
+    map.setLayoutProperty("paths", "visibility", "none");
+    showPaths = false;
+  } else {
+    map.setLayoutProperty("paths", "visibility", "visible");
+    showPaths = true;
+  }
+});
+
+let showBundledPaths = true;
+const bundledPathsCheck = document.getElementById("bundledPathsCheck");
+bundledPathsCheck.addEventListener("change", function () {
+  if (showBundledPaths) {
+    map.setLayoutProperty("h3-flows", "visibility", "none");
+    showBundledPaths = false;
+  } else {
+    map.setLayoutProperty("h3-flows", "visibility", "visible");
+    showBundledPaths = true;
+  }
 });
 
 const tooltip = document.createElement("div");
@@ -69,12 +138,16 @@ function createTooltipEntry(title, message) {
   return entry;
 }
 
-function updatePortTooltip({ object, x, y }) {
+function updatePortTooltip({ object }) {
+  if (!showports) return; // prevent display of tooltip when filter unchecked
   if (object) {
     tooltip.style.display = "block";
+
+    const [x, y] = convertGeoToScreen(object.geometry.coordinates);
     tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
     tooltip.style.top = `${y + 10}px`;
-    tooltipTitle.innerText = object.properties.name.trim();
+
+    tooltipTitle.innerText = object.properties.name;
     tooltipEntries.textContent = "";
     tooltipEntries.appendChild(createTooltipEntry("Type:", "Port"));
     tooltipEntries.appendChild(
@@ -94,12 +167,19 @@ function updatePortTooltip({ object, x, y }) {
   }
 }
 
-function updateShipTooltip({ object, x, y }) {
+function updateShipTooltip({ object }) {
+  if (!showships) return; // prevent display of tooltip when filter unchecked
   if (object) {
     tooltip.style.display = "block";
+
+    const [x, y] = convertGeoToScreen([
+      object.position.longitude,
+      object.position.latitude,
+    ]);
     tooltip.style.left = `${x - tooltip.offsetWidth / 2}px`;
     tooltip.style.top = `${y + 10}px`;
-    tooltipTitle.innerText = object.name.trim();
+
+    tooltipTitle.innerText = object.name;
     tooltipEntries.textContent = "";
     tooltipEntries.appendChild(createTooltipEntry("Type:", "Ship"));
     tooltipEntries.appendChild(createTooltipEntry("MMSI:", object.mmsi));
@@ -116,11 +196,12 @@ function updateShipTooltip({ object, x, y }) {
       ),
     );
     tooltipEntries.appendChild(
-      createTooltipEntry("Call sign:", object.callSign.trim()),
+      createTooltipEntry("Call sign:", object.callSign),
     );
     tooltipEntries.appendChild(
-      createTooltipEntry("Destination:", object.destination.trim()),
+      createTooltipEntry("Destination:", object.destination),
     );
+    tooltipEntries.appendChild(createTooltipEntry("Last Update:", object.time));
   } else {
     tooltip.style.display = "none";
   }
@@ -152,7 +233,7 @@ let mapInitialized = false;
 // Layer visibility state
 let layerVisibility = {
   ports: true,
-  routes: false,
+  paths: true,
   ships: true,
   flows: true,
   chokepoints: true,
@@ -276,16 +357,37 @@ function updateFlowLayerWithData(flows) {
   deckOverlay.setProps({ layers: updatedLayers });
 }
 
+async function fetchData() {
+  const [portsResponse, shipsResponse, chokepointsResponse, pathsResponse] =
+    await Promise.all([
+      fetch(`${serverAddress}/ports`),
+      fetch(`${serverAddress}/ships`),
+      fetch(`${serverAddress}/chokepoints`),
+      fetch(`${serverAddress}/pathsDetailed`),
+    ]);
+
+  const ports = await portsResponse.json();
+  const ships = await shipsResponse.json();
+  const paths = await pathsResponse.json();
+  const chokepoints = await chokepointsResponse.json();
+
+  return { ports, ships, chokepoints, paths }; // return all datasets -> to be used in other functions
+}
+
+let colorScheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+  ? [255, 255, 255]
+  : [0, 0, 0];
+
 async function updateMap() {
   const portsResponse = await fetch(`${serverAddress}/ports`);
   const shipsResponse = await fetch(`${serverAddress}/ships`);
   const chokepointsResponse = await fetch(`${serverAddress}/chokepoints`);
-  const routesResponse = await fetch(`${serverAddress}/routes`);
+  const pathsResponse = await fetch(`${serverAddress}/pathsDetailed`);
 
   const ports = await portsResponse.json();
   const ships = await shipsResponse.json();
   const chokepoints = await chokepointsResponse.json();
-  const routes = await routesResponse.json();
+  const paths = await pathsResponse.json();
   const flows = await loadFlows();
 
   const maxIntensity = flows.reduce(
@@ -295,30 +397,26 @@ async function updateMap() {
 
   deckOverlay.setProps({
     layers: [
-      new GeoJsonLayer({
+      new ScatterplotLayer({
         id: "ports",
         data: ports,
-        pointType: "circle+text",
-        filled: true,
-        stroked: true,
-        getLineColor: [0, 0, 255],
-        getFillColor: [0, 0, 255],
-        pointRadiusMaxPixels: 5,
-        pointRadiusMinPixels: 2,
+        getPosition: (d) => d.geometry.coordinates,
+        getFillColor: colorScheme,
+        radiusScale: 100,
+        radiusMinPixels: 1.5,
+        radiusMaxPixels: 15,
         pickable: true,
         onHover: updatePortTooltip,
-        visible: layerVisibility.ports,
       }),
       new PathLayer({
-        id: "routes",
-        data: routes,
+        id: "paths",
+        data: paths,
         getPath: (d) => d.path,
         getColor: [255, 255, 255, 50],
         widthScale: 75,
         widthMinPixels: 1,
         widthMaxPixels: 10,
         pickable: true,
-        visible: layerVisibility.routes,
       }),
       new ArcLayer({
         id: "h3-flows",
@@ -357,16 +455,16 @@ async function updateMap() {
         visible: layerVisibility.flows,
       }),
       new ScatterplotLayer({
-        id: "points",
+        id: "ships",
         data: ships,
         filled: true,
         getPosition: (d) => [d.position.longitude, d.position.latitude],
         getFillColor: [255, 0, 0],
-        radiusMinPixels: 2,
-        radiusMaxPixels: 3,
+        radiusScale: 75,
+        radiusMinPixels: 0.75,
+        radiusMaxPixels: 10,
         pickable: true,
         onHover: updateShipTooltip,
-        visible: layerVisibility.ships,
       }),
       new GeoJsonLayer({
         id: "chokepoints",
@@ -381,7 +479,6 @@ async function updateMap() {
         pointRadiusMinPixels: 6,
         pickable: true,
         onHover: updateChokepointTooltip,
-        visible: layerVisibility.chokepoints,
       }),
     ],
   });
@@ -395,31 +492,6 @@ function startPeriodicUpdates() {
 }
 
 map.addControl(deckOverlay);
-
-document.getElementById("portsToggle").addEventListener("change", (e) => {
-  layerVisibility.ports = e.target.checked;
-  updateMap();
-});
-
-document.getElementById("routesToggle").addEventListener("change", (e) => {
-  layerVisibility.routes = e.target.checked;
-  updateMap();
-});
-
-document.getElementById("shipsToggle").addEventListener("change", (e) => {
-  layerVisibility.ships = e.target.checked;
-  updateMap();
-});
-
-document.getElementById("flowsToggle").addEventListener("change", (e) => {
-  layerVisibility.flows = e.target.checked;
-  updateMap();
-});
-
-document.getElementById("chokepointsToggle").addEventListener("change", (e) => {
-  layerVisibility.chokepoints = e.target.checked;
-  updateMap();
-});
 
 // Preload all flow resolutions, then initialize map
 preloadAllFlows().then(() => {
@@ -438,3 +510,126 @@ preloadAllFlows().then(() => {
     startPeriodicUpdates();
   });
 });
+
+async function layersSetup() {
+  const { ports, ships, chokepoints } = await fetchData();
+
+  const portsUl = document.getElementById("mpj");
+  const shipsUl = document.getElementById("mpjj");
+  const chokepointsUl = document.getElementById("mpjjj");
+
+  for (const port of ports) {
+    portsUl.innerHTML += `<li><label>${port.properties.name}</label><li>`;
+  }
+
+  /*
+  const filteredShips = ships.filter(
+    (ship) =>
+      ship.latitude > 47 &&
+      ship.latitude < 50 &&
+      ship.longitude > 7 &&
+      ship.longitude < 10,
+  );
+
+  // Then sort the filtered ships alphabetically by name, with a check for undefined or null names
+  filteredShips.sort((a, b) => {
+    const nameA = a.name ? a.name : ""; // Ensure name is not undefined
+    const nameB = b.name ? b.name : ""; // Ensure name is not undefined
+    return nameA.localeCompare(nameB);
+  });
+
+  // Add the sorted ships to the shipsUl list
+  for (const ship of filteredShips) {
+    shipsUl.innerHTML += `<li><label>${ship.name}</label><li>`;
+  }
+  */
+
+  for (const chokepoint of chokepoints) {
+    chokepointsUl.innerHTML += `<li><label>${chokepoint.properties.name}</label><li>`;
+  }
+
+  portsUl.querySelectorAll("li").forEach(function (li) {
+    for (const port of ports) {
+      li.addEventListener("mouseenter", function () {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == port.properties.name) {
+          updatePortTooltip({ object: port });
+        }
+      });
+
+      li.addEventListener("click", function () {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == port.properties.name) {
+          map.flyTo({
+            center: port.geometry.coordinates,
+            zoom: 11,
+            speed: 1,
+          });
+        }
+      });
+    }
+  });
+
+  shipsUl.querySelectorAll("li").forEach(function (li) {
+    li.addEventListener("mouseenter", function () {
+      for (const ship of ships) {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == ship.name) {
+          updateShipTooltip({ object: ship });
+        }
+      }
+    });
+
+    li.addEventListener("click", function () {
+      for (const ship of ships) {
+        if (li.innerHTML.replace(/<\/?label>/g, "") == ship.name) {
+          map.flyTo({
+            center: [ship.longitude, ship.latitude],
+            zoom: 15,
+            speed: 1,
+          });
+        }
+      }
+    });
+  });
+
+  chokepointsUl.querySelectorAll("li").forEach(function (li) {
+    li.addEventListener("click", function () {
+      for (const chokepoint of chokepoints) {
+        if (
+          li.innerHTML.replace(/<\/?label>/g, "") === chokepoint.properties.name
+        ) {
+          map.flyTo({
+            center: [
+              chokepoint.geometry.coordinates[0], // longitude
+              chokepoint.geometry.coordinates[1], // latitude
+            ],
+            zoom: 8,
+            speed: 1,
+          });
+        }
+      }
+    });
+  });
+}
+
+async function updateShipIndicator() {
+  const { ships } = await fetchData();
+
+  const totalShips = ships.length;
+  const latestShipUpdate = ships.reduce((latest, current) => {
+    // reduce json to 1 object comparison-based
+    const latestTime = new Date(latest.time);
+    const currentTime = new Date(current.time);
+    return currentTime > latestTime ? current : latest;
+  }, ships[0]);
+  const latestShip = ships[ships.length - 1];
+
+  const indicatorDiv = document.getElementById("ship-indicator");
+  indicatorDiv.innerHTML = ` 
+    <p><strong> Total Ships: </strong> ${totalShips} <span class="blinking-dot"></span> </p> 
+    <p><strong> Time: </strong> ${moment(latestShipUpdate.time).tz("Europe/Berlin").format("YYYY-MM-DD HH:mm:ss")} </p> 
+    <p><strong> Updated: </strong> ${latestShipUpdate.name} </p>
+    <p><strong> Added: </strong> ${latestShip.name} </p>
+  `;
+}
+
+setInterval(updateShipIndicator, 30000); // update every second
+layersSetup();

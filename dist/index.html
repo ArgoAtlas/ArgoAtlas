@@ -4,32 +4,134 @@
     <meta charset="UTF-8" />
     <title>ArgoAtlas</title>
     <link href="styles.css" rel="stylesheet" />
-    <script src="main.js" defer></script>
   </head>
   <body>
+    <div id="tooltip"></div>
     <div id="map"></div>
-    <div id="layerControl">
-      <h3>Layers</h3>
-      <label>
-        <input type="checkbox" id="portsToggle" checked />
-        <span>Ports</span>
-      </label>
-      <label>
-        <input type="checkbox" id="routesToggle" />
-        <span>Routes</span>
-      </label>
-      <label>
-        <input type="checkbox" id="shipsToggle" checked />
-        <span>Ships</span>
-      </label>
-      <label>
-        <input type="checkbox" id="flowsToggle" checked />
-        <span>Flows</span>
-      </label>
-      <label>
-        <input type="checkbox" id="chokepointsToggle" checked />
-        <span>Chokepoints</span>
-      </label>
+    <script src="main.js" defer></script>
+
+    <div class="ArgoAtlas">
+      <img
+        src="https://img.icons8.com/?size=100&id=s7eHaFDy5Rqu&format=png&color=FFFFFF"
+        alt="Globe Icon"
+        class="globe-icon"
+      />
+      ArgoAtlas
+      <ul class="ArgoAtlas-list">
+        <div class="Indicator" id="ship-indicator">
+          <!-- Total count and last update will be added here -->
+        </div>
+
+        <div class="checkbox-dropdown">
+          ‎ Filters
+          <ul class="checkbox-dropdown-list">
+            <li>
+              <label>
+                <input type="checkbox" id="portsCheck" checked /> Ports
+              </label>
+            </li>
+            <li>
+              <label>
+                <input type="checkbox" id="shipsCheck" checked /> Ships
+              </label>
+            </li>
+            <li>
+              <label>
+                <input type="checkbox" id="pathsCheck" checked /> Paths
+              </label>
+            </li>
+            <li>
+              <label>
+                <input type="checkbox" id="bundledPathsCheck" checked /> Bundled
+                Paths
+              </label>
+            </li>
+            <li>
+              <label>
+                <input type="checkbox" id="chokepointsCheck" checked /> Major
+                Chokepoints
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <div class="layers-dropdown">
+          ‎ Layer Elements
+          <ul class="layers-dropdown-list">
+            <li>
+              <div class="elements-dropdown">
+                <label> Ports </label>
+                <ul id="mpj" class="elements-dropdown-list"></ul>
+                <!-----------------ports displayed here in a list-------------------->
+              </div>
+            </li>
+            <li>
+              <div class="elements-dropdown">
+                <label> Ships (Baden-Würt.) </label>
+                <ul id="mpjj" class="elements-dropdown-list"></ul>
+                <!-----------------ships displayed here in a list-------------------->
+              </div>
+            </li>
+            <li>
+              <div class="elements-dropdown">
+                <label> Major Chokepoints </label>
+                <ul id="mpjjj" class="elements-dropdown-list"></ul>
+                <!-----------------chokepoints displayed here in a list-------------------->
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <a
+          href="https://github.com/ArgoAtlas/ArgoAtlas"
+          class="github-link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://img.icons8.com/ios-glyphs/30/FFFFFF/github.png"
+            alt="GitHub Icon"
+            class="github-icon"
+          />
+          View on GitHub
+        </a>
+      </ul>
     </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script>
+      $(".ArgoAtlas").click(function () {
+        $(this).toggleClass("isnt-active");
+      });
+
+      $(".ArgoAtlas ul").click(function (e) {
+        e.stopPropagation();
+      });
+
+      $(".checkbox-dropdown").click(function () {
+        $(this).toggleClass("is-active");
+      });
+
+      $(".checkbox-dropdown ul").click(function (e) {
+        e.stopPropagation();
+      });
+
+      $(".layers-dropdown").click(function () {
+        $(this).toggleClass("iss-active");
+      });
+
+      $(".layers-dropdown ul").click(function (e) {
+        e.stopPropagation();
+      });
+
+      $(".elements-dropdown").click(function () {
+        $(this).toggleClass("isss-active");
+        $(this).toggleClass("issss-active");
+      });
+
+      $(".elements-dropdown ul").click(function (e) {
+        e.stopPropagation();
+      });
+    </script>
   </body>
 </html>
