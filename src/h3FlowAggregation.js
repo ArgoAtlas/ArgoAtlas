@@ -9,12 +9,21 @@ const RESOLUTIONS = {
 };
 
 export default class H3FlowAggregation {
+  static areNeighborCells(cell1, cell2) {
+    const neighbors = gridDisk(cell1, 1);
+    return neighbors.includes(cell2);
+  }
+
   static pathToH3Cells(startLon, startLat, endLon, endLat, resolution) {
     const startCell = latLngToCell(startLat, startLon, resolution);
     const endCell = latLngToCell(endLat, endLon, resolution);
 
     if (startCell === endCell) {
       return []; // Same cell, no flow
+    }
+
+    if (!this.areNeighborCells(startCell, endCell)) {
+      return [];
     }
 
     return [startCell, endCell];
