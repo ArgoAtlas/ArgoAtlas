@@ -321,20 +321,22 @@ function updateFlowLayerWithData(flows) {
         getTargetPosition: (d) => d.target,
         getSourceColor: (d) => {
           const intensity = d.intensity / maxIntensity;
+          const opacity = Math.pow(intensity, 1.5) * 255;
           return [
             100 + intensity * 155,
             150 + intensity * 105,
             200 + intensity * 55,
-            150 + intensity * 105,
+            opacity,
           ];
         },
         getTargetColor: (d) => {
           const intensity = d.intensity / maxIntensity;
+          const opacity = Math.pow(intensity, 1.5) * 255;
           return [
             100 + intensity * 155,
             150 + intensity * 105,
             200 + intensity * 55,
-            150 + intensity * 105,
+            opacity,
           ];
         },
         getWidth: (d) => {
@@ -425,20 +427,22 @@ async function updateMap() {
         getTargetPosition: (d) => d.target,
         getSourceColor: (d) => {
           const intensity = d.intensity / maxIntensity;
+          const opacity = Math.pow(intensity, 1.5) * 255;
           return [
             100 + intensity * 155,
             150 + intensity * 105,
             200 + intensity * 55,
-            150 + intensity * 105,
+            opacity,
           ];
         },
         getTargetColor: (d) => {
           const intensity = d.intensity / maxIntensity;
+          const opacity = Math.pow(intensity, 1.5) * 255;
           return [
             100 + intensity * 155,
             150 + intensity * 105,
             200 + intensity * 55,
-            150 + intensity * 105,
+            opacity,
           ];
         },
         getWidth: (d) => {
