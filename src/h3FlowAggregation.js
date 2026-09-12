@@ -1,4 +1,4 @@
-import { latLngToCell, cellToLatLng, gridDisk } from "h3-js";
+import { latLngToCell, cellToLatLng } from "h3-js";
 import FlowCell from "../models/flowCell.js";
 import Path from "../models/path.js";
 
@@ -62,7 +62,7 @@ export default class H3FlowAggregation {
     }
 
     let updatedCount = 0;
-    for (const [flowKey, flow] of flows) {
+    for (const flow of flows.values()) {
       const sourceCoords = cellToLatLng(flow.sourceCell);
       const targetCoords = cellToLatLng(flow.targetCell);
 
@@ -102,7 +102,7 @@ export default class H3FlowAggregation {
 
     try {
       await FlowCell.deleteMany({});
-    } catch (error) {
+    } catch {
       console.log(
         "Note: FlowCell collection doesn't exist yet, will be created",
       );

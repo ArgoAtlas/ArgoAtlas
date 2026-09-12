@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import config from "./config.json" with { type: "json" };
 import Ship from "./models/ship.js";
 import Path from "./models/path.js";
-import FlowCell from "./models/flowCell.js";
 import H3FlowAggregation from "./src/h3FlowAggregation.js";
 import ports from "./ports.json" with { type: "json" };
 import chokepoints from "./chokepoints.json" with { type: "json" };
@@ -221,7 +220,9 @@ async function updateRoutes() {
 
             combinedRoutes.push(matchedData);
           }
-        } catch (error) {}
+        } catch {
+          // No navigable route between this ship and port; skip it
+        }
         break; // Stop after finding the first matching port
       }
     }

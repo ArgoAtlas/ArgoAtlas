@@ -23,7 +23,7 @@ async function main() {
         await H3FlowAggregation.aggregateAllFlows();
         break;
 
-      case "stats":
+      case "stats": {
         console.log("\nFlow Statistics:");
         const pathCount = await Path.countDocuments();
         console.log(`Total paths: ${pathCount}`);
@@ -51,18 +51,21 @@ async function main() {
           }
         }
         break;
+      }
 
-      case "cleanup":
+      case "cleanup": {
         const days = parseInt(process.argv[3]) || 7;
         console.log(`Cleaning up flows older than ${days} days...`);
         await H3FlowAggregation.cleanupOldFlows(days);
         break;
+      }
 
-      case "clear":
+      case "clear": {
         console.log("Clearing all flow data...");
         const result = await FlowCell.deleteMany({});
         console.log(`Deleted ${result.deletedCount} flow cells`);
         break;
+      }
 
       default:
         console.log("ArgoAtlas Flow CLI");
