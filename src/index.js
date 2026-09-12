@@ -1,12 +1,19 @@
-import { MapboxOverlay } from "@deck.gl/mapbox";
+import { MapLibreOverlay } from "@deck.gl/maplibre";
 import {
   GeoJsonLayer,
   ScatterplotLayer,
   PathLayer,
   ArcLayer,
 } from "@deck.gl/layers";
-import { Map } from "maplibre-gl";
+import { Map, setWorkerUrl } from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?asset";
+// Side-effect only: the worker imports this chunk by relative path, so it has
+// to be emitted next to it.
+import "maplibre-gl/dist/maplibre-gl-shared.mjs?asset";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// Must run before the Map constructor, which acquires the worker pool lazily.
+setWorkerUrl(workerUrl);
 
 const serverAddress = "http://localhost:5000";
 const darkStyle =
@@ -37,7 +44,7 @@ window
 
 await map.once("load");
 
-const deckOverlay = new MapboxOverlay({
+const deckOverlay = new MapLibreOverlay({
   interleaved: true,
   layers: [],
 });
@@ -148,6 +155,8 @@ function updateChokepointTooltip({ object, x, y }) {
 let cachedFlows = {};
 let currentResolution = null;
 let mapInitialized = false;
+// The overlay keeps its props private, so track the layers we last handed it.
+let currentLayers = [];
 
 // Layer visibility state
 let layerVisibility = {
@@ -197,14 +206,49 @@ async function loadFlows() {
   return cachedFlows[resolution] || [];
 }
 
+function createFlowLayer(flows, maxIntensity) {
+  return new ArcLayer({
+    id: "h3-flows",
+    data: flows,
+    getSourcePosition: (d) => d.source,
+    getTargetPosition: (d) => d.target,
+    getSourceColor: (d) => {
+      const intensity = d.intensity / maxIntensity;
+      return [
+        100 + intensity * 155,
+        150 + intensity * 105,
+        200 + intensity * 55,
+        150 + intensity * 105,
+      ];
+    },
+    getTargetColor: (d) => {
+      const intensity = d.intensity / maxIntensity;
+      return [
+        100 + intensity * 155,
+        150 + intensity * 105,
+        200 + intensity * 55,
+        150 + intensity * 105,
+      ];
+    },
+    getWidth: (d) => {
+      const intensity = d.intensity / maxIntensity;
+      return 1 + intensity * 4;
+    },
+    widthMinPixels: 1,
+    widthMaxPixels: 8,
+    greatCircle: true,
+    parameters: {
+      depthTest: false,
+      blend: true,
+    },
+    visible: layerVisibility.flows,
+  });
+}
+
 // Function to update only the flow layer
 function updateFlowLayer() {
   // Skip if map not initialized yet
   if (!mapInitialized) {
-    return;
-  }
-
-  if (!deckOverlay || !deckOverlay.props || !deckOverlay.props.layers) {
     return;
   }
 
@@ -229,51 +273,11 @@ function updateFlowLayerWithData(flows) {
     0.1,
   );
 
-  const currentLayers = deckOverlay.props.layers;
+  currentLayers = currentLayers.map((layer) =>
+    layer.id === "h3-flows" ? createFlowLayer(flows, maxIntensity) : layer,
+  );
 
-  const updatedLayers = currentLayers.map((layer) => {
-    if (layer.id === "h3-flows") {
-      return new ArcLayer({
-        id: "h3-flows",
-        data: flows,
-        getSourcePosition: (d) => d.source,
-        getTargetPosition: (d) => d.target,
-        getSourceColor: (d) => {
-          const intensity = d.intensity / maxIntensity;
-          return [
-            100 + intensity * 155,
-            150 + intensity * 105,
-            200 + intensity * 55,
-            150 + intensity * 105,
-          ];
-        },
-        getTargetColor: (d) => {
-          const intensity = d.intensity / maxIntensity;
-          return [
-            100 + intensity * 155,
-            150 + intensity * 105,
-            200 + intensity * 55,
-            150 + intensity * 105,
-          ];
-        },
-        getWidth: (d) => {
-          const intensity = d.intensity / maxIntensity;
-          return 1 + intensity * 4;
-        },
-        widthMinPixels: 1,
-        widthMaxPixels: 8,
-        greatCircle: true,
-        parameters: {
-          depthTest: false,
-          blend: true,
-        },
-        visible: layerVisibility.flows,
-      });
-    }
-    return layer;
-  });
-
-  deckOverlay.setProps({ layers: updatedLayers });
+  deckOverlay.setProps({ layers: currentLayers });
 }
 
 async function updateMap() {
@@ -293,98 +297,63 @@ async function updateMap() {
     0.1,
   );
 
-  deckOverlay.setProps({
-    layers: [
-      new GeoJsonLayer({
-        id: "ports",
-        data: ports,
-        pointType: "circle+text",
-        filled: true,
-        stroked: true,
-        getLineColor: [0, 0, 255],
-        getFillColor: [0, 0, 255],
-        pointRadiusMaxPixels: 5,
-        pointRadiusMinPixels: 2,
-        pickable: true,
-        onHover: updatePortTooltip,
-        visible: layerVisibility.ports,
-      }),
-      new PathLayer({
-        id: "routes",
-        data: routes,
-        getPath: (d) => d.path,
-        getColor: [255, 255, 255, 50],
-        widthScale: 75,
-        widthMinPixels: 1,
-        widthMaxPixels: 10,
-        pickable: true,
-        visible: layerVisibility.routes,
-      }),
-      new ArcLayer({
-        id: "h3-flows",
-        data: flows,
-        getSourcePosition: (d) => d.source,
-        getTargetPosition: (d) => d.target,
-        getSourceColor: (d) => {
-          const intensity = d.intensity / maxIntensity;
-          return [
-            100 + intensity * 155,
-            150 + intensity * 105,
-            200 + intensity * 55,
-            150 + intensity * 105,
-          ];
-        },
-        getTargetColor: (d) => {
-          const intensity = d.intensity / maxIntensity;
-          return [
-            100 + intensity * 155,
-            150 + intensity * 105,
-            200 + intensity * 55,
-            150 + intensity * 105,
-          ];
-        },
-        getWidth: (d) => {
-          const intensity = d.intensity / maxIntensity;
-          return 1 + intensity * 4;
-        },
-        widthMinPixels: 1,
-        widthMaxPixels: 8,
-        greatCircle: true,
-        parameters: {
-          depthTest: false,
-          blend: true,
-        },
-        visible: layerVisibility.flows,
-      }),
-      new ScatterplotLayer({
-        id: "points",
-        data: ships,
-        filled: true,
-        getPosition: (d) => [d.position.longitude, d.position.latitude],
-        getFillColor: [255, 0, 0],
-        radiusMinPixels: 2,
-        radiusMaxPixels: 3,
-        pickable: true,
-        onHover: updateShipTooltip,
-        visible: layerVisibility.ships,
-      }),
-      new GeoJsonLayer({
-        id: "chokepoints",
-        data: chokepoints,
-        pointType: "circle",
-        filled: true,
-        stroked: true,
-        getLineColor: [255, 255, 255],
-        lineWidthMinPixels: 2,
-        getFillColor: [255, 215, 0, 220],
-        pointRadiusMaxPixels: 12,
-        pointRadiusMinPixels: 6,
-        pickable: true,
-        onHover: updateChokepointTooltip,
-        visible: layerVisibility.chokepoints,
-      }),
-    ],
-  });
+  currentLayers = [
+    new GeoJsonLayer({
+      id: "ports",
+      data: ports,
+      pointType: "circle+text",
+      filled: true,
+      stroked: true,
+      getLineColor: [0, 0, 255],
+      getFillColor: [0, 0, 255],
+      pointRadiusMaxPixels: 5,
+      pointRadiusMinPixels: 2,
+      pickable: true,
+      onHover: updatePortTooltip,
+      visible: layerVisibility.ports,
+    }),
+    new PathLayer({
+      id: "routes",
+      data: routes,
+      getPath: (d) => d.path,
+      getColor: [255, 255, 255, 50],
+      widthScale: 75,
+      widthMinPixels: 1,
+      widthMaxPixels: 10,
+      pickable: true,
+      visible: layerVisibility.routes,
+    }),
+    createFlowLayer(flows, maxIntensity),
+    new ScatterplotLayer({
+      id: "points",
+      data: ships,
+      filled: true,
+      getPosition: (d) => [d.position.longitude, d.position.latitude],
+      getFillColor: [255, 0, 0],
+      radiusMinPixels: 2,
+      radiusMaxPixels: 3,
+      pickable: true,
+      onHover: updateShipTooltip,
+      visible: layerVisibility.ships,
+    }),
+    new GeoJsonLayer({
+      id: "chokepoints",
+      data: chokepoints,
+      pointType: "circle",
+      filled: true,
+      stroked: true,
+      getLineColor: [255, 255, 255],
+      lineWidthMinPixels: 2,
+      getFillColor: [255, 215, 0, 220],
+      pointRadiusMaxPixels: 12,
+      pointRadiusMinPixels: 6,
+      pickable: true,
+      onHover: updateChokepointTooltip,
+      visible: layerVisibility.chokepoints,
+    }),
+  ];
+
+  deckOverlay.setProps({ layers: currentLayers });
 }
 
 function startPeriodicUpdates() {
