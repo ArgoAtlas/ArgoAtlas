@@ -1,7 +1,7 @@
 {
   "name": "argoatlas",
   "version": "0.1.0",
-  "description": "",
+  "description": "Real-time global maritime traffic visualization: live ship positions, world ports, chokepoints, and aggregated shipping flows on an interactive map.",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
